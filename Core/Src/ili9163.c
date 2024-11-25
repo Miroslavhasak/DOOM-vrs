@@ -25,6 +25,9 @@
  */
 
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 
 #include "ili9163.h"
 //#include "font5x8.h"
@@ -147,14 +150,18 @@ void lcdInitialise(uint8_t orientation)
     lcdWriteCommand(SET_COLUMN_ADDRESS);
     lcdWriteParameter(0x00); // XSH
     lcdWriteParameter(0x00); // XSL
-    lcdWriteParameter(0x00); // XEH
-    lcdWriteParameter(0x7f); // XEL (128 pixels x)
+    //lcdWriteParameter(0x00); // XEH
+    //lcdWriteParameter(0x7f); // XEL (128 pixels x)
+    lcdWriteParameter(0x01); // End Column High Byte
+    lcdWriteParameter(0x3F); // End Column Low Byte (319, 0x013F in hex)
 
     lcdWriteCommand(SET_PAGE_ADDRESS);
     lcdWriteParameter(0x00);
     lcdWriteParameter(0x00);
-    lcdWriteParameter(0x00);
-    lcdWriteParameter(0x7f); // 128 pixels y
+    //lcdWriteParameter(0x00);
+    //lcdWriteParameter(0x7f); // 128 pixels y
+    lcdWriteParameter(0x00); // End Page High Byte
+    lcdWriteParameter(0xEF); // End Page Low Byte (239, 0x00EF in hex)
 
 	// Select display orientation
     lcdWriteCommand(SET_ADDRESS_MODE);
@@ -193,6 +200,7 @@ void lcdClearDisplay(uint16_t colour)
 	}
 }
 
+// changing a single pixel on display
 void lcdPlot(uint8_t x, uint8_t y, uint16_t colour)
 {
 	// Horizontal Address Start Position
@@ -214,9 +222,6 @@ void lcdPlot(uint8_t x, uint8_t y, uint16_t colour)
 	lcdWriteData(colour >> 8, colour);
 }
 
-// Draw a line from x0, y0 to x1, y1
-// Note:	This is a version of Bresenham's line drawing algorithm
-//			It only draws lines from left to right!
 void lcdLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour)
 {
 	int16_t dy = y1 - y0;
@@ -235,23 +240,23 @@ void lcdLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour)
 	}
 	else stepx = 1;
 
-	dy <<= 1; 							// dy is now 2*dy
-	dx <<= 1; 							// dx is now 2*dx
+	dy <<= 1;
+	dx <<= 1;
 
 	lcdPlot(x0, y0, colour);
 
 	if (dx > dy) {
-		int fraction = dy - (dx >> 1);	// same as 2*dy - dx
+		int fraction = dy - (dx >> 1);
 		while (x0 != x1)
 		{
 			if (fraction >= 0)
 			{
 				y0 += stepy;
-				fraction -= dx; 		// same as fraction -= 2*dx
+				fraction -= dx;
 			}
 
    			x0 += stepx;
-   			fraction += dy; 				// same as fraction -= 2*dy
+   			fraction += dy;
    			lcdPlot(x0, y0, colour);
 		}
 	}
@@ -273,6 +278,70 @@ void lcdLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour)
 	}
 }
 
+void lcdDottedLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour, uint16_t step)
+{
+	int16_t dy = y1 - y0;
+	int16_t dx = x1 - x0;
+	int16_t stepx, stepy;
+	int16_t delta = 0;
+	int16_t astep = 0;
+
+	if (dy < 0)
+	{
+		dy = -dy; stepy = -step;
+	}
+	else stepy = step;
+
+ 	if (dx < 0)
+	{
+		dx = -dx; stepx = -step;
+	}
+	else stepx = step;
+
+	dy <<= 1;
+	dx <<= 1;
+
+	if (dx > dy) {
+		int fraction = dy - (dx >> 1);
+		delta = abs(x0 - x1);
+		astep = abs(stepx);
+		while (delta > 0)
+		{
+			if (fraction >= 0)
+			{
+				y0 += stepy;
+				fraction -= dx;
+			}
+
+			lcdPlot(x0, y0, colour);
+   			x0 += stepx;
+   			delta = delta - astep;
+   			fraction += dy;
+
+		}
+	}
+	else
+	{
+		int fraction = dx - (dy >> 1);
+		delta = abs(y0 - y1);
+		astep = abs(stepy);
+		while (delta > 0)
+		{
+			if (fraction >= 0)
+			{
+				x0 += stepx;
+				fraction -= dy;
+			}
+
+			lcdPlot(x0, y0, colour);
+			y0 += stepy;
+			delta = delta - astep;
+			fraction += dx;
+
+		}
+	}
+}
+
 // Draw a rectangle between x0, y0 and x1, y1
 void lcdRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour)
 {
@@ -280,6 +349,15 @@ void lcdRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colou
 	lcdLine(x0, y1, x1, y1, colour);
 	lcdLine(x1, y0, x1, y1, colour);
 	lcdLine(x0, y0, x1, y0, colour);
+}
+
+// Draw a dotted rectangle between x0, y0 and x1, y1
+void lcdDottedRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour, uint16_t step)
+{
+	lcdDottedLine(x0, y0, x0, y1, colour, step);
+	lcdDottedLine(x0, y1, x1, y1, colour, step);
+	lcdDottedLine(x1, y0, x1, y1, colour, step);
+	lcdDottedLine(x0, y0, x1, y0, colour, step);
 }
 
 // Draw a filled rectangle
@@ -308,13 +386,41 @@ void lcdFilledRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t
 	lcdWriteCommand(WRITE_MEMORY_START);
 
 	for (pixels = 0; pixels < ((x1 - x0) * (y1 - y0)); pixels++)
-		lcdWriteData(colour >> 8, colour);;
+		lcdWriteData(colour >> 8, colour);
 }
 
-// Draw a circle
-// Note:	This is another version of Bresenham's line drawing algorithm.
-//			There's plenty of documentation on the web if you are curious
-//			how this works.
+void lcdFilledDottedRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour, uint16_t step)
+{
+	for (int16_t y = y0; y < y1; y += step) { // Skip every 2 rows
+		for (int16_t x = x0; x < x1; x += step) { // Skip every 2 columns
+			// Set the cursor for the specific pixel
+			lcdPlot(x, y, colour);
+		}
+	}
+}
+
+void lcdPolygon(int16_t *points, int16_t sides, uint16_t colour)
+{
+	for(int16_t i = 0; i<sides; i++){
+		int16_t x0 = points[(2*i)];
+		int16_t y0 = points[(2*i + 1)];
+		int16_t x1 = points[(2*((i+1)%sides))];
+		int16_t y1 = points[(2*((i+1)%sides) + 1)];
+		lcdLine(x0, y0, x1, y1, colour);
+	}
+}
+
+void lcdDottedPolygon(int16_t *points, int16_t sides, uint16_t colour, uint16_t step)
+{
+	for(int16_t i = 0; i<sides; i++){
+		int16_t x0 = points[(2*i)];
+		int16_t y0 = points[(2*i + 1)];
+		int16_t x1 = points[(2*((i+1)%sides))];
+		int16_t y1 = points[(2*((i+1)%sides) + 1)];
+		lcdDottedLine(x0, y0, x1, y1, colour, step);
+	}
+}
+
 void lcdCircle(int16_t xCentre, int16_t yCentre, int16_t radius, uint16_t colour)
 {
 	int16_t x = 0, y = radius;
@@ -339,6 +445,33 @@ void lcdCircle(int16_t xCentre, int16_t yCentre, int16_t radius, uint16_t colour
 		}
 
 		x++;
+	}
+}
+
+void lcdDottedCircle(int16_t xCentre, int16_t yCentre, int16_t radius, uint16_t colour, uint16_t step)
+{
+	int16_t x = 0, y = radius;
+	int16_t d = 3 - (2 * radius);
+
+    while(x <= y)
+	{
+		lcdPlot(xCentre + x, yCentre + y, colour);
+		lcdPlot(xCentre + y, yCentre + x, colour);
+		lcdPlot(xCentre - x, yCentre + y, colour);
+		lcdPlot(xCentre + y, yCentre - x, colour);
+		lcdPlot(xCentre - x, yCentre - y, colour);
+		lcdPlot(xCentre - y, yCentre - x, colour);
+		lcdPlot(xCentre + x, yCentre - y, colour);
+		lcdPlot(xCentre - y, yCentre + x, colour);
+
+		if (d < 0) d += (4 * x) + 6;
+		else
+		{
+			d += (4 * (x - y)) + 10;
+			y -= step;
+		}
+
+		x+= step;
 	}
 }
 

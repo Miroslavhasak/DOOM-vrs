@@ -144,9 +144,15 @@ void lcdInitialise(uint8_t orientation);
 void lcdClearDisplay(uint16_t colour);
 void lcdPlot(uint8_t x, uint8_t y, uint16_t colour);
 void lcdLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour);
+void lcdDottedLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour, uint16_t step);
 void lcdRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour);
+void lcdDottedRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour, uint16_t step);
 void lcdFilledRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour);
+void lcdFilledDottedRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour, uint16_t step);
+void lcdPolygon(int16_t *points, int16_t sides, uint16_t colour);
+void lcdDottedPolygon(int16_t *points, int16_t sides, uint16_t colour, uint16_t step);
 void lcdCircle(int16_t xCentre, int16_t yCentre, int16_t radius, uint16_t colour);
+void lcdDottedCircle(int16_t xCentre, int16_t yCentre, int16_t radius, uint16_t colour, uint16_t step);
 
 void lcdPutCh(unsigned char character, uint8_t x, uint8_t y, uint16_t fgColour, uint16_t bgColour);
 void lcdPutS(const char *string, uint8_t x, uint8_t y, uint16_t fgColour, uint16_t bgColour);
