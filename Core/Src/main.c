@@ -23,6 +23,8 @@
 #include "spi.h"
 #include "gpio.h"
 #include "ili9163.h"
+#include <stdio.h>
+#include <string.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -108,74 +110,21 @@ int main(void)
   lcdInitialise(LCD_ORIENTATION3);
   //lcdClearDisplay(decodeRgbValue(80, 0, 0));
 
-  lcdFilledRectangle(0, 0, 255, 255, decodeRgbValue(0, 0, 0));
+  //vycistit dostupne pixely
+  lcdFilledRectangle(0, 0, 255, 239, decodeRgbValue(0, 0, 0));
+  //vycistit nedostupne pixely
+  lcdFilledRectangle(255, 0, 512, 239, decodeRgbValue(10, 10, 10));
+  lcdLine(0, 0, 0, 239, decodeRgbValue(0, 0, 0));
+  lcdLine(255, 0, 255, 239, decodeRgbValue(0, 0, 0));
 
-  //lcdPutS("DLROW OLLEH", lcdTextX(2), lcdTextY(1), decodeRgbValue(0, 0, 0), decodeRgbValue(31, 31, 31));
-  //lcdPutS("8 einecivC", lcdTextX(2), lcdTextY(4), decodeRgbValue(255, 255, 255), decodeRgbValue(0, 0, 0));
-  //lcdPutS("SPI komunikacia aicakinu", lcdTextX(2), lcdTextY(5), decodeRgbValue(255, 255, 255), decodeRgbValue(0, 0, 0));
 
-  //uint8_t state = 0;  //na co bude sluzit state?
-
-  int16_t Pentagon[] = {10, 10, 150, 10, 150, 180, 100, 110, 20, 180};
-
-  // demo cyklus, kde testujem vykreslovanie a animaciu, text este nie je vyrieseny
-  while (1)
-  {
-		//state ? lcdFilledRectangle(10, 75, 34, 99, decodeRgbValue(31, 0, 0)) : lcdFilledRectangle(10, 75, 34, 99, decodeRgbValue(0, 31, 0));
-		//state ^= 1;
-	  	lcdRectangle(225, 225, 10, 250, decodeRgbValue(255, 255, 255)); //dolny status bar
-	  	lcdCircle(115,232,5,decodeRgbValue(255, 255, 255)); //akysi kruh, v povodnej doom je tam hlava hraca
-	  	// testovanie vykreslovania animacie
-	  	for (int16_t i = 0; i<10; i++){
-	  		lcdRectangle(20+i*10, 20, 100+i*10, 100, decodeRgbValue(255, 255, 255));
-	  		lcdRectangle(20+i*10, 20, 100+i*10, 100, decodeRgbValue(0, 0, 0));
-	  	}
-	  	for (int16_t i = 0; i<10; i++){
-			lcdDottedRectangle(20+i*10, 20, 100+i*10, 100, decodeRgbValue(255, 255, 255), 3);
-			lcdDottedRectangle(20+i*10, 20, 100+i*10, 100, decodeRgbValue(0, 0, 0), 3);
-	  	}
-	  	for (int16_t i = 0; i<10; i++){
-			lcdDottedRectangle(20+i*10, 20, 100+i*10, 100, decodeRgbValue(255, 255, 255), 5);
-			lcdDottedRectangle(20+i*10, 20, 100+i*10, 100, decodeRgbValue(0, 0, 0), 5);
-		}
-	  	//testujem polygon
-	  	lcdPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(255, 255, 255));
-	  	LL_mDelay(200);
-	  	lcdPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(0, 0, 0));
-	  	lcdDottedPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(255, 255, 255), 3);
-	  	LL_mDelay(200);
-	    lcdDottedPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(0, 0, 0), 3);
-	  	// testujem vykreslenie plneneho stvorca
-	  	lcdFilledRectangle(30, 30, 170, 170, decodeRgbValue(255, 255, 255));
-	  	LL_mDelay(200);
-	  	lcdFilledRectangle(30, 30, 170, 170, decodeRgbValue(0, 0, 0));
-	  	//testujem vykreslenie bodkovaneho stvorca
-	  	lcdFilledDottedRectangle(30, 30, 170, 170, decodeRgbValue(255, 255, 255), 5);
-	  	LL_mDelay(200);
-	  	lcdFilledDottedRectangle(30, 30, 170, 170, decodeRgbValue(0, 0, 0), 5);
-	    // testujem vykreslenie ciary v oboch smeroch
-	  	lcdLine(10, 10, 190, 190, decodeRgbValue(255, 255, 255));
-	  	LL_mDelay(200);
-	  	lcdLine(10, 10, 190, 190, decodeRgbValue(0, 0, 0));
-	  	lcdLine(190, 190, 10, 10, decodeRgbValue(255, 255, 255));
-	  	LL_mDelay(200);
-	    lcdLine(190, 190, 10, 10, decodeRgbValue(0, 0, 0));
-	    // testujem vykreslenie kruhu
-	    lcdCircle(100, 100, 80, decodeRgbValue(255, 255, 255));
-	    LL_mDelay(200);
-	    lcdCircle(100, 100, 80, decodeRgbValue(0, 0, 0));
-	    lcdDottedCircle(100, 100, 80, decodeRgbValue(255, 255, 255), 3);
-	    LL_mDelay(200);
-	    lcdDottedCircle(100, 100, 80, decodeRgbValue(0, 0, 0), 3);
-	    // animovany kruh
-	    for (int16_t i = 0; i<10; i++){
-			lcdDottedCircle(60+i*10, 100, 50, decodeRgbValue(255, 255, 255), 3);
-			lcdDottedCircle(60+i*10, 100, 50, decodeRgbValue(0, 0, 0), 3);
-		}
-
+	// demo cyklus, kde testujem vykreslovanie a animaciu, potom tu bude game logic a menu asi
+	while (1)
+	{
+		demoPlot();
 		LL_mDelay(300);
-  }
-  /* USER CODE END 3 */
+	}
+/* USER CODE END 3 */
 }
 
 /**

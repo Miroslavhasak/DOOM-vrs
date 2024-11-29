@@ -22,7 +22,13 @@
  * @author Christopher Vagnetoft (NoccyLabs)
  * @copyright (C) 2012 Simon Inns
  * @copyright parts (C) 2012 NoccyLabs
- */
+ *
+//merana rychlost vykreslovania:
+//najmensi vykreslovaci vykon je 2200 px/s
+//maximalny vykreslovaci vykon pre ciaru je 16300 px/s
+//maximalny vykreslovaci vykon pre plneny stvorec je 17000 px/s
+//priemerny vykreslovaci vykon pre polygonovy stvorec je 14600 px/s
+*/
 
 #include <string.h>
 #include <stdio.h>
@@ -47,7 +53,7 @@ void lcdReset(void)
 	LL_mDelay(100);
 }
 
-void lcdWriteCommand(uint8_t address)
+void lcdWriteCommand(uint8_t address) //urcuje obsah nasledujucich write data/parameter
 {
 	cd_reset();
 	cs_reset();
@@ -55,19 +61,28 @@ void lcdWriteCommand(uint8_t address)
 	cs_set();
 }
 
-void lcdWriteParameter(uint8_t parameter)
+void lcdWriteParameter(int16_t parameter) //tymto sa zapisuju rozne veci
 {
 	cd_set();
 	cs_reset();
-	readWriteSPI1(parameter);
+	readWriteSPI1(parameter); //original
+	/*if (parameter > 0xFF) {
+		 //If parameter is larger than 8 bits, split it into high and low bytes
+		readWriteSPI1((uint8_t)(parameter >> 8)); // Send high byte
+		readWriteSPI1((uint8_t)(parameter & 0xFF)); // Send low byte
+	}
+	else {
+		 //If parameter is 8 bits or less, send it directly
+		readWriteSPI1((uint8_t)(parameter & 0xFF));
+	}*/
 	cs_set();
 }
 
-void lcdWriteData(uint8_t dataByte1, uint8_t dataByte2)
+void lcdWriteData(uint8_t dataByte1, uint8_t dataByte2)  //tymto sa zapisuje farba
 {
 	cd_set();
 	cs_reset();
-	readWriteSPI1(dataByte1);
+	readWriteSPI1(dataByte1); //posielame samostatne dva bajty o farbe
 	readWriteSPI1(dataByte2);
 	cs_set();
 }
@@ -150,16 +165,12 @@ void lcdInitialise(uint8_t orientation)
     lcdWriteCommand(SET_COLUMN_ADDRESS);
     lcdWriteParameter(0x00); // XSH
     lcdWriteParameter(0x00); // XSL
-    //lcdWriteParameter(0x00); // XEH
-    //lcdWriteParameter(0x7f); // XEL (128 pixels x)
     lcdWriteParameter(0x01); // End Column High Byte
-    lcdWriteParameter(0x3F); // End Column Low Byte (319, 0x013F in hex)
+    lcdWriteParameter(0x3F); // End Column Low Byte 319
 
     lcdWriteCommand(SET_PAGE_ADDRESS);
     lcdWriteParameter(0x00);
     lcdWriteParameter(0x00);
-    //lcdWriteParameter(0x00);
-    //lcdWriteParameter(0x7f); // 128 pixels y
     lcdWriteParameter(0x00); // End Page High Byte
     lcdWriteParameter(0xEF); // End Page Low Byte (239, 0x00EF in hex)
 
@@ -201,80 +212,98 @@ void lcdClearDisplay(uint16_t colour)
 }
 
 // changing a single pixel on display
-void lcdPlot(uint8_t x, uint8_t y, uint16_t colour)
+void lcdPlot(int16_t x, int16_t y, uint16_t colour)
 {
 	// Horizontal Address Start Position
 	lcdWriteCommand(SET_COLUMN_ADDRESS);
 	lcdWriteParameter(0x00);
 	lcdWriteParameter(x);
 	lcdWriteParameter(0x00);
-	lcdWriteParameter(0x7f);
+	lcdWriteParameter(0x013F);//319
 
 	// Vertical Address end Position
 	lcdWriteCommand(SET_PAGE_ADDRESS);
 	lcdWriteParameter(0x00);
 	lcdWriteParameter(y);
 	lcdWriteParameter(0x00);
-	lcdWriteParameter(0x7f);//7f
+	lcdWriteParameter(0xEF);//239
 
 	// Plot the point
 	lcdWriteCommand(WRITE_MEMORY_START);
-	lcdWriteData(colour >> 8, colour);
+	if((x>=0)&&(x<256)&&(y>=0)&&(y<240)) //check if pixel is inside the bounds
+		lcdWriteData(colour >> 8, colour);
 }
 
 void lcdLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour)
 {
+	if(x0 == x1){ //vodorovna ciara optimalizovane
+		lcdFilledRectangle(x0, y0, x1, y1, colour);
+		return;
+	}
+	else if(y0 == y1){ //zvisla ciara optimalizovane
+		lcdFilledRectangle(x0, y0, x1, y1, colour);
+		return;
+	}
+
 	int16_t dy = y1 - y0;
 	int16_t dx = x1 - x0;
 	int16_t stepx, stepy;
 
-	if (dy < 0)
+	if (dy < 0) //derivacie musia byt kladne
 	{
 		dy = -dy; stepy = -1;
 	}
 	else stepy = 1;
 
- 	if (dx < 0)
+	if (dx < 0) //derivacie musia byt kladne
 	{
 		dx = -dx; stepx = -1;
 	}
 	else stepx = 1;
 
-	dy <<= 1;
-	dx <<= 1;
+	dy <<= 1;	//dy*2
+	dx <<= 1;	//dx*2
 
-	lcdPlot(x0, y0, colour);
+	lcdPlot(x0, y0, colour);	//zaciatocny pixel
+	uint16_t partialLineStartCoord = 0;
 
-	if (dx > dy) {
-		int fraction = dy - (dx >> 1);
+	if (dx > dy) {  //menej nez 45 stupnov
+		partialLineStartCoord = x0-1;
+		int fraction = dy - (dx >> 1);	//dy-(dx/2)
 		while (x0 != x1)
 		{
-			if (fraction >= 0)
+
+			if (fraction >= 0) //when we move up 1 pixel on Y axis
 			{
+				lcdFilledRectangle(partialLineStartCoord+1, y0, x0, y0, colour);
+				partialLineStartCoord = x0;
 				y0 += stepy;
 				fraction -= dx;
 			}
 
-   			x0 += stepx;
-   			fraction += dy;
-   			lcdPlot(x0, y0, colour);
+			x0 += stepx;
+			fraction += dy;
 		}
+		lcdFilledRectangle(partialLineStartCoord+1, y0, x0, y0, colour);
 	}
-	else
+	else			//viac nez 45 stupnov
 	{
+		partialLineStartCoord = y0-1;
 		int fraction = dx - (dy >> 1);
 		while (y0 != y1)
 		{
-			if (fraction >= 0)
+			if (fraction >= 0)	//when we move up 1 pixel on X axis
 			{
+				lcdFilledRectangle(x0, partialLineStartCoord+1, x0, y0, colour);
+				partialLineStartCoord = y0;
 				x0 += stepx;
 				fraction -= dy;
 			}
 
 			y0 += stepy;
 			fraction += dx;
-			lcdPlot(x0, y0, colour);
 		}
+		lcdFilledRectangle(x0, partialLineStartCoord+1, x0, y0, colour);
 	}
 }
 
@@ -361,16 +390,24 @@ void lcdDottedRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t
 }
 
 // Draw a filled rectangle
-// Note:	y1 must be greater than y0  and x1 must be greater than x0
-//			for this to work
 void lcdFilledRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour)
 {
 	uint16_t pixels;
+	int16_t pom = 0;
+	if (x0>x1){	//x1 must be greater than x0
+		pom = x0;
+		x0 = x1;
+		x1 = pom;
+	}
+	if (y0>y1){	//y1 must be greater than y0
+		pom = y0;
+		y0 = y1;
+		y1 = pom;
+	}
 
 	// To speed up plotting we define a x window with the width of the
 	// rectangle and then just output the required number of bytes to
 	// fill down to the end point
-
 	lcdWriteCommand(SET_COLUMN_ADDRESS); // Horizontal Address Start Position
 	lcdWriteParameter(0x00);
 	lcdWriteParameter(x0);
@@ -384,16 +421,14 @@ void lcdFilledRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t
 	lcdWriteParameter(y1);
 
 	lcdWriteCommand(WRITE_MEMORY_START);
-
-	for (pixels = 0; pixels < ((x1 - x0) * (y1 - y0)); pixels++)
-		lcdWriteData(colour >> 8, colour);
+	for (pixels = 0; pixels < (((x1+1) - x0) * ((y1+1) - y0)); pixels++)
+			lcdWriteData(colour >> 8, colour);
 }
 
 void lcdFilledDottedRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour, uint16_t step)
 {
-	for (int16_t y = y0; y < y1; y += step) { // Skip every 2 rows
-		for (int16_t x = x0; x < x1; x += step) { // Skip every 2 columns
-			// Set the cursor for the specific pixel
+	for (int16_t y = y0; y < y1; y += step) { // Skip every n rows
+		for (int16_t x = x0; x < x1; x += step) { // Skip every n columns
 			lcdPlot(x, y, colour);
 		}
 	}
@@ -418,6 +453,125 @@ void lcdDottedPolygon(int16_t *points, int16_t sides, uint16_t colour, uint16_t 
 		int16_t x1 = points[(2*((i+1)%sides))];
 		int16_t y1 = points[(2*((i+1)%sides) + 1)];
 		lcdDottedLine(x0, y0, x1, y1, colour, step);
+	}
+}
+
+void lcdFilledTriangle(int16_t *points, uint16_t colour)
+{
+	// zoradim body od vzostupne podla osi X
+	for(int16_t i = 2; i>=0; i--){
+		int16_t max = -30000;
+		int16_t maxInd = 0;
+		for(int16_t k = 0; k<=i; k++){
+			if (points[k*2]>=max){
+				max = points[k*2];
+				maxInd = k;
+			}
+		}
+		int16_t pomX = points[maxInd*2]; //ulozim si maximum
+		int16_t pomY = points[maxInd*2+1];
+		points[maxInd*2] = points[i*2]; //na jeho poziciu premiestnim data z konca
+		points[maxInd*2+1] = points[i*2+1];
+		points[i*2] = pomX; //na jeho koniec dat dam maximum
+		points[i*2+1] = pomY;
+	}
+
+	float_t der[3];
+
+	//treba osetrit delenie nulou pri vypocte strmosti priamky
+	if((points[2] - points[0]) != 0){ //medzi bodmi 1 a 2
+		der[0] = (float_t)(points[3] - points[1]) / (float_t)(points[2] - points[0]);
+	}
+	if((points[4] - points[2]) != 0){ //medzi bodmi 2 a 3
+		der[1] = (float_t)(points[5] - points[3]) / (float_t)(points[4] - points[2]);
+	}
+	if((points[4] - points[0]) != 0){ //medzi bodmi 1 a 3
+		der[2] = (float_t)(points[5] - points[1]) / (float_t)(points[4] - points[0]);
+	}
+
+	for (int16_t x = points[0]; x <= points[4]; x++) {	// vykreslit trojuholnik
+		if (x < points[2]) {
+			lcdLine(x, (int16_t)(der[0] * (x-points[0]) + points[1]), x, (int16_t)(der[2] * (x-points[0]) + points[1]), colour);
+		} else {
+			lcdLine(x, (int16_t)(der[1] * (x-points[2]) + points[3]), x, (int16_t)(der[2] * (x-points[0]) + points[1]), colour);
+		}
+	}
+
+}
+
+void lcdFilledDottedTriangle(int16_t *points, uint16_t colour, uint16_t step)
+{
+	// zoradim body od vzostupne podla osi X
+	for(int16_t i = 2; i>=0; i--){
+		int16_t max = -30000;
+		int16_t maxInd = 0;
+		for(int16_t k = 0; k<=i; k++){
+			if (points[k*2]>=max){
+				max = points[k*2];
+				maxInd = k;
+			}
+		}
+		int16_t pomX = points[maxInd*2]; //ulozim si maximum
+		int16_t pomY = points[maxInd*2+1];
+		points[maxInd*2] = points[i*2]; //na jeho poziciu premiestnim data z konca
+		points[maxInd*2+1] = points[i*2+1];
+		points[i*2] = pomX; //na jeho koniec dat dam maximum
+		points[i*2+1] = pomY;
+	}
+
+	float_t der[3];
+
+	//treba osetrit delenie nulou pri vypocte strmosti priamky
+	if((points[2] - points[0]) != 0){ //medzi bodmi 1 a 2
+		der[0] = (float_t)(points[3] - points[1]) / (float_t)(points[2] - points[0]);
+	}
+	if((points[4] - points[2]) != 0){ //medzi bodmi 2 a 3
+		der[1] = (float_t)(points[5] - points[3]) / (float_t)(points[4] - points[2]);
+	}
+	if((points[4] - points[0]) != 0){ //medzi bodmi 1 a 3
+		der[2] = (float_t)(points[5] - points[1]) / (float_t)(points[4] - points[0]);
+	}
+
+	for (int16_t x = points[0]; x <= points[4]; x+=step) {	// vykreslit trojuholnik
+		if (x < points[2]) {
+			lcdDottedLine(x, (int16_t)(der[0] * (x-points[0]) + points[1]), x, (int16_t)(der[2] * (x-points[0]) + points[1]), colour, step);
+		} else {
+			lcdDottedLine(x, (int16_t)(der[1] * (x-points[2]) + points[3]), x, (int16_t)(der[2] * (x-points[0]) + points[1]), colour, step);
+		}
+	}
+
+}
+
+// nesmie mat stred mimo svojej plochy
+void lcdFilledPolygon(int16_t *points, int16_t sides, uint16_t colour){
+	float_t avgX = 0;
+	float_t avgY = 0;
+	for(int8_t i=0; i<sides; i++){
+		avgX += (float_t)(points[i*2]);
+		avgY += (float_t)(points[i*2+1]);
+	}
+	avgX = (float_t)(avgX)/(float_t)(sides);
+	avgY = (float_t)(avgY)/(float_t)(sides);
+
+	for(int8_t i=0; i<sides; i++){
+		int16_t pointsT[] = {points[i*2], points[i*2+1], points[(2*((i+1)%sides))], points[(2*((i+1)%sides) + 1)], (int16_t)(avgX), (int16_t)(avgY)};
+		lcdFilledTriangle( pointsT, colour );
+	}
+}
+
+void lcdFilledDottedPolygon(int16_t *points, int16_t sides, uint16_t colour, uint16_t step){
+	float_t avgX = 0;
+	float_t avgY = 0;
+	for(int8_t i=0; i<sides; i++){
+		avgX += (float_t)(points[i*2]);
+		avgY += (float_t)(points[i*2+1]);
+	}
+	avgX = (float_t)(avgX)/(float_t)(sides);
+	avgY = (float_t)(avgY)/(float_t)(sides);
+
+	for(int8_t i=0; i<sides; i++){
+		int16_t pointsT[] = {points[i*2], points[i*2+1], points[(2*((i+1)%sides))], points[(2*((i+1)%sides) + 1)], (int16_t)(avgX), (int16_t)(avgY)};
+		lcdFilledDottedTriangle( pointsT, colour, step );
 	}
 }
 
@@ -475,6 +629,52 @@ void lcdDottedCircle(int16_t xCentre, int16_t yCentre, int16_t radius, uint16_t 
 	}
 }
 
+void lcdFilledCircle(int16_t xCentre, int16_t yCentre, int16_t radius, uint16_t colour)
+{
+	int16_t x = 0, y = radius;
+	int16_t d = 3 - (2 * radius);
+
+	while(x <= y)
+	{
+		lcdLine(xCentre + x, yCentre + y, xCentre + x, yCentre -y, colour);
+		lcdLine(xCentre -x, yCentre + y, xCentre - x, yCentre -y, colour);
+		lcdLine(xCentre + y, yCentre + x, xCentre + y, yCentre -x, colour);
+		lcdLine(xCentre -y, yCentre + x, xCentre -y, yCentre -x, colour);
+
+		if (d < 0) d += (4 * x) + 6;
+		else
+		{
+			d += (4 * (x - y)) + 10;
+			y -= 1;
+		}
+
+		x+= 1;
+	}
+}
+
+void lcdFilledDottedCircle(int16_t xCentre, int16_t yCentre, int16_t radius, uint16_t colour, uint16_t step)
+{
+	int16_t x = 0, y = radius;
+	int16_t d = 3 - (2 * radius);
+
+	while(x <= y)
+	{
+		lcdDottedLine(xCentre + x, yCentre + y, xCentre + x, yCentre -y, colour, step);
+		lcdDottedLine(xCentre -x, yCentre + y, xCentre - x, yCentre -y, colour, step);
+		lcdDottedLine(xCentre + y, yCentre + x, xCentre + y, yCentre -x, colour, step);
+		lcdDottedLine(xCentre -y, yCentre + x, xCentre -y, yCentre -x, colour, step);
+
+		if (d < 0) d += (4 * x) + 6;
+		else
+		{
+			d += (4 * (x - y)) + 10;
+			y -= step;
+		}
+
+		x+= step;
+	}
+}
+
 // LCD text manipulation functions --------------------------------------------------------------------------
 #define pgm_read_byte_near(address_short) (uint16_t)(address_short)
 // Plot a character at the specified x, y co-ordinates (top left hand corner of character)
@@ -505,10 +705,47 @@ void lcdPutCh(unsigned char character, uint8_t x, uint8_t y, uint16_t fgColour, 
 	{
 		for (column = 0; column < 6; column++)
 		{
-			//if ((font5x8[character][column]) & (1 << row))
-			if ((fontus[character][column]) & (1 << row))
-				lcdWriteData(fgColour>>8, fgColour);
-			else lcdWriteData(bgColour >> 8, bgColour);
+			// Calculate the mirrored column index
+			uint8_t mirroredColumn = 5 - column;
+			// Check the bit corresponding to the current row in the mirrored column
+			if ((fontus[character][mirroredColumn]) & (1 << row))
+				lcdWriteData(fgColour >> 8, fgColour);
+			else
+				lcdWriteData(bgColour >> 8, bgColour);
+		}
+	}
+}
+
+void lcdPutChSized(unsigned char character, uint8_t x, uint8_t y, uint16_t fgColour, uint16_t bgColour, uint8_t size)
+{
+	uint8_t row, column;
+
+	// To speed up plotting we define a x window of 6 pixels and then
+	// write out one row at a time.  This means the LCD will correctly
+	// update the memory pointer saving us a good few bytes
+
+	lcdWriteCommand(SET_COLUMN_ADDRESS); // Horizontal Address Start Position
+	lcdWriteParameter(0x00);
+	lcdWriteParameter(x);
+	lcdWriteParameter(0x00);
+	lcdWriteParameter(x+5*size);
+
+	lcdWriteCommand(SET_PAGE_ADDRESS); // Vertical Address end Position
+	lcdWriteParameter(0x00);
+	lcdWriteParameter(y);
+	lcdWriteParameter(0x00);
+	lcdWriteParameter(0x7f);
+
+	lcdWriteCommand(WRITE_MEMORY_START);
+
+	// Plot the font data
+	for (row = 0; row < 8*size; row+=size)
+	{
+		for (column = 0; column < 6*size; column+=size)
+		{
+			uint8_t mirroredColumn = 5*size - column;
+			if ((fontus[character][(uint8_t)(mirroredColumn/size)]) & (1 << (uint8_t)(row/size)))
+				lcdFilledRectangle(x+column, y+row, x+column+size-1, y+row+size-1, fgColour);
 		}
 	}
 }
@@ -539,17 +776,157 @@ void lcdPutS(const char *string, uint8_t x, uint8_t y, uint16_t fgColour, uint16
 	{
 		// Check if we are out of bounds and move to
 		// the next line if we are
-		if (x > 121)
+		if (x < 10)
 		{
 			x = origin;
 			y += 8;
 		}
 
 		// If we move past the bottom of the screen just exit
-		if (y > 120) break;
+		if (y > 230) break;
 
 		// Plot the current character
 		lcdPutCh(string[characterNumber], x, y, fgColour, bgColour);
-		x += 6;
+		x -= 6;
 	}
+}
+
+// Plot a string of characters to the LCD
+void lcdPutSSized(const char *string, uint8_t x, uint8_t y, uint16_t fgColour, uint16_t bgColour, uint8_t size)
+{
+	x = x-size*6;
+	uint8_t origin = x;
+	uint8_t characterNumber;
+
+	for (characterNumber = 0; characterNumber < strlen(string); characterNumber++)
+	{
+		// Check if we are out of bounds and move to
+		// the next line if we are
+		if (x < 1*size)
+		{
+			x = origin;
+			y += 8*size;
+		}
+
+		// If we move past the bottom of the screen just exit
+		if (y > (239-6*size)) break;
+
+		// Plot the current character
+		lcdPutChSized(string[characterNumber], x, y, fgColour, bgColour, size);
+		if ((x-6*size)>0) x -= 6*size;
+		else
+		{
+			x = origin;
+			y += 8*size;
+		}
+	}
+}
+
+void demoPlot(){
+	int16_t Triangle[] = {20, 170, 230, 150, 140, 40};
+	int16_t Square[] = {30, 30, 170, 30, 170, 170, 30, 170};
+	int16_t Pentagon[] = {50, 20, 150, 20, 180, 120, 100, 180, 10, 120};
+
+	lcdPutS("opakovany vypis:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+	lcdRectangle(15, 225, 240, 250, decodeRgbValue(255, 255, 255)); //dolny status bar
+	lcdCircle(127,232,5,decodeRgbValue(255, 255, 255)); //akysi kruh, v povodnej doom je tam hlava hraca
+	//test printing text (normal, sized, with numbers)
+	lcdPutS("HELLO WORLD", 220, 230, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+	lcdPutSSized("DOOM-vrs", 230, 190, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),4);
+	int16_t score = 56;
+	char scoreText[16];
+	sprintf(scoreText, "SCORE = %d", score);
+	lcdPutS(scoreText, 100, 230, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+	lcdPutS("opakovany vypis:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+
+	lcdPutS("TEXT velkosti 3:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+	char demoText[] = "abcdefghijklmnopqrstuvwxyz0123456789,.!?()+-_*/=%";
+	lcdPutSSized(demoText, 220, 20, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0), 3);
+	LL_mDelay(2000);
+	lcdPutSSized(demoText, 220, 20, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0), 3);
+	lcdPutS("TEXT velkosti 3:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+	lcdPutS("ANIMACIE:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+	// animovane stvorce
+	for (int16_t i = 0; i<20; i++){
+	  lcdRectangle(20+i*10, 50, 100+i*10, 130, decodeRgbValue(255, 255, 255));
+	  lcdRectangle(20+i*10, 50, 100+i*10, 130, decodeRgbValue(0, 0, 0));
+	}
+	for (int16_t i = 0; i<20; i++){
+	  lcdDottedRectangle(20+i*10, 50, 100+i*10, 130, decodeRgbValue(255, 255, 255), 3);
+	  lcdDottedRectangle(20+i*10, 50, 100+i*10, 130, decodeRgbValue(0, 0, 0), 3);
+	}
+	for (int16_t i = 0; i<20; i++){
+	  lcdDottedRectangle(20+i*10, 50, 100+i*10, 130, decodeRgbValue(255, 255, 255), 5);
+	  lcdDottedRectangle(20+i*10, 50, 100+i*10, 130, decodeRgbValue(0, 0, 0), 5);
+	}
+	// animovany kruh
+	for (int16_t i = 0; i<10; i++){
+	  lcdDottedCircle(60+i*10, 100, 50, decodeRgbValue(255, 255, 255), 3);
+	  lcdDottedCircle(60+i*10, 100, 50, decodeRgbValue(0, 0, 0), 3);
+	}
+	lcdPutS("ANIMACIE:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+	lcdPutS("POLYGONY:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+	//testujem polygon
+	lcdPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(255, 255, 255));
+	LL_mDelay(200);
+	lcdPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(0, 0, 0));
+	lcdDottedPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(255, 255, 255), 3);
+	LL_mDelay(200);
+	lcdDottedPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(0, 0, 0), 3);
+	//testujem plneny trojuholnik a taktiez plneny polygon
+	lcdFilledTriangle( Triangle, decodeRgbValue(255, 255, 255) );
+	LL_mDelay(200);
+	lcdFilledTriangle( Triangle, decodeRgbValue(0, 0, 0) );
+	lcdFilledPolygon( Square, sizeof(Square) / (2 * sizeof(Square[0])), decodeRgbValue(255, 255, 255) );
+	LL_mDelay(200);
+	lcdFilledPolygon( Square, sizeof(Square) / (2 * sizeof(Square[0])), decodeRgbValue(0, 0, 0) );
+	lcdFilledPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(255, 255, 255) );
+	LL_mDelay(200);
+	lcdFilledPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(0, 0, 0) );
+	lcdFilledDottedPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(255, 255, 255), 3 );
+	LL_mDelay(200);
+	lcdFilledDottedPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(0, 0, 0), 3 );
+	lcdPutS("POLYGONY:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+	lcdPutS("STVORCE:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+	//TESTUJEM VYKRESLENIE STVORCOV
+	lcdRectangle(30, 30, 170, 170, decodeRgbValue(255, 255, 255));
+	LL_mDelay(200);
+	lcdRectangle(30, 30, 170, 170, decodeRgbValue(0, 0, 0));
+	lcdDottedRectangle(30, 30, 170, 170, decodeRgbValue(255, 255, 255), 3);
+	LL_mDelay(200);
+	lcdDottedRectangle(30, 30, 170, 170, decodeRgbValue(0, 0, 0), 3);
+	// testujem vykreslenie plneneho stvorca
+	lcdFilledRectangle(30, 30, 170, 170, decodeRgbValue(255, 255, 255));
+	LL_mDelay(200);
+	lcdFilledRectangle(30, 30, 170, 170, decodeRgbValue(0, 0, 0));
+	//testujem vykreslenie bodkovaneho stvorca
+	lcdFilledDottedRectangle(30, 30, 170, 170, decodeRgbValue(255, 255, 255), 5);
+	LL_mDelay(200);
+	lcdFilledDottedRectangle(30, 30, 170, 170, decodeRgbValue(0, 0, 0), 5);
+	lcdPutS("STVORCE:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+	lcdPutS("CIARY:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+	// testujem vykreslenie ciary v oboch smeroch
+	lcdLine(10, 10, 190, 300, decodeRgbValue(255, 255, 255));
+	LL_mDelay(200);
+	lcdLine(10, 10, 190, 300, decodeRgbValue(0, 0, 0));
+	lcdLine(10, 10, 300, 150, decodeRgbValue(255, 255, 255));
+	LL_mDelay(200);
+	lcdLine(10, 10, 300, 150, decodeRgbValue(0, 0, 0));
+	lcdPutS("CIARY:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+	lcdPutS("KRUHY:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+	// testujem vykreslenie kruhu
+	lcdCircle(100, 100, 80, decodeRgbValue(255, 255, 255));
+	LL_mDelay(200);
+	lcdCircle(100, 100, 80, decodeRgbValue(0, 0, 0));
+	lcdDottedCircle(100, 100, 80, decodeRgbValue(255, 255, 255), 3);
+	LL_mDelay(200);
+	lcdDottedCircle(100, 100, 80, decodeRgbValue(0, 0, 0), 3);
+	//testujem vykreslenie plneho kruhu
+	lcdFilledCircle(100, 100, 80, decodeRgbValue(255, 255, 255));
+	LL_mDelay(200);
+	lcdFilledCircle(100, 100, 80, decodeRgbValue(0, 0, 0));
+	lcdFilledDottedCircle(100, 100, 80, decodeRgbValue(255, 255, 255), 5);
+	LL_mDelay(500);
+	lcdFilledDottedCircle(100, 100, 80, decodeRgbValue(0, 0, 0), 5);
+	lcdPutS("KRUHY:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
 }

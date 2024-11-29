@@ -53,7 +53,7 @@ void MX_SPI1_Init(void)
   SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_LOW;
   SPI_InitStruct.ClockPhase = LL_SPI_PHASE_1EDGE;
   SPI_InitStruct.NSS = LL_SPI_NSS_SOFT;
-  // rychlost prenosu ovplyvnuje rychlost vykreslovania
+  // rychlost prenosu ovplyvnuje
   SPI_InitStruct.BaudRate =  LL_SPI_BAUDRATEPRESCALER_DIV2; //najrychlejsie
   //SPI_InitStruct.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV32; //250kBps povodne
   //SPI_InitStruct.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV64; //125kBps
