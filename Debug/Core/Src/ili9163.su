@@ -28,4 +28,4 @@
 ../Core/Src/ili9163.c:767:9:lcdTextY	16	static
 ../Core/Src/ili9163.c:770:6:lcdPutS	40	static
 ../Core/Src/ili9163.c:795:6:lcdPutSSized	40	static
-../Core/Src/ili9163.c:825:6:demoPlot	152	static
+../Core/Src/ili9163.c:825:6:demoPlot	136	static

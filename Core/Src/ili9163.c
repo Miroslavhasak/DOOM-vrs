@@ -827,26 +827,97 @@ void demoPlot(){
 	int16_t Square[] = {30, 30, 170, 30, 170, 170, 30, 170};
 	int16_t Pentagon[] = {50, 20, 150, 20, 180, 120, 100, 180, 10, 120};
 
+
+    /*
 	lcdPutS("opakovany vypis:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
 	lcdRectangle(15, 225, 240, 250, decodeRgbValue(255, 255, 255)); //dolny status bar
 	lcdCircle(127,232,5,decodeRgbValue(255, 255, 255)); //akysi kruh, v povodnej doom je tam hlava hraca
-	//test printing text (normal, sized, with numbers)
-	lcdPutS("HELLO WORLD", 220, 230, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-	lcdPutSSized("DOOM-vrs", 230, 190, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),4);
-	int16_t score = 56;
-	char scoreText[16];
-	sprintf(scoreText, "SCORE = %d", score);
-	lcdPutS(scoreText, 100, 230, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-	lcdPutS("opakovany vypis:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+    */
 
-	lcdPutS("TEXT velkosti 3:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-	char demoText[] = "abcdefghijklmnopqrstuvwxyz0123456789,.!?()+-_*/=%";
-	lcdPutSSized(demoText, 220, 20, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0), 3);
-	LL_mDelay(2000);
-	lcdPutSSized(demoText, 220, 20, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0), 3);
-	lcdPutS("TEXT velkosti 3:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
-	lcdPutS("ANIMACIE:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-	// animovane stvorce
+    //-----------------------------------------------------------------------------------------------------hlavne menu-----------------------------------------------------------------------------------------------------
+    // lcdPutS(retazec, suradnica x, suradnica y, farba textu, farba pozadia)
+    // lcdPutSSized(retazec, suradnica x, suradnica y, farba textu, farba pozadia, velkost textu)
+    // 320x240 resolution
+	// ale resolution je zatial 250x240
+	// uberanie x hodnoty posuva text vpravo uberanie y hodnoty posuva text hore
+
+    // lcdPutS("DOOM", 280, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+
+
+	//-----------------------------------------------------------------------------------------------------test printing text (normal, sized, with numbers)-----------------------------------------------------------------------------------------------------
+
+	lcdPutSSized("DOOM", 215, 0, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),8);
+	lcdPutSSized("NEW GAME", 180, 64, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
+	lcdPutSSized("OPTIONS", 180, 80, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
+	lcdPutSSized("LOAD GAME", 180, 96, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
+	lcdPutSSized("SAVE GAME", 180, 112, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
+	lcdPutSSized("READ THIS!", 180, 128, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
+	lcdPutSSized("QUIT GAME", 180, 144, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
+
+	//-----------------------------------------------------------------------------------------------------HUD-----------------------------------------------------------------------------------------------------
+
+	int16_t ammo = 24;
+	int16_t health = 78;
+	int16_t armor = 0;
+	char ammoText[16];
+	char healthText[16];
+	char armorText[16];
+
+
+	lcdPutS("AMMO", 250, 230, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+	sprintf(ammoText, "%d", ammo);
+	lcdPutS(ammoText, 240, 222, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+
+	lcdPutS("HEALTH", 145, 230, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+	sprintf(healthText, "%d%%", health);
+	lcdPutS(healthText, 125, 222, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+
+	lcdPutS("ARMOR", 35, 230, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+	sprintf(armorText, "%d%%", armor);
+	lcdPutS(armorText, 20, 222, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+
+	LL_mDelay(5000);
+
+	lcdPutSSized("DOOM", 215, 0, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),8);
+	lcdPutSSized("NEW GAME", 180, 64, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
+	lcdPutSSized("OPTIONS", 180, 80, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
+	lcdPutSSized("LOAD GAME", 180, 96, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
+	lcdPutSSized("SAVE GAME", 180, 112, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
+	lcdPutSSized("READ THIS!", 180, 128, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
+	lcdPutSSized("QUIT GAME", 180, 144, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
+
+	lcdPutS("AMMO", 250, 230, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+	sprintf(ammoText, "%d", ammo);
+	lcdPutS(ammoText, 240, 222, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+
+	lcdPutS("HEALTH", 145, 230, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+	sprintf(healthText, "%d%%", health);
+	lcdPutS(healthText, 125, 222, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+
+	lcdPutS("ARMOR", 35, 230, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+	sprintf(armorText, "%d%%", armor);
+	lcdPutS(armorText, 20, 222, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+
+	//int16_t score = 56;
+	//char scoreText[16];
+	//sprintf(scoreText, "SCORE = %d", score);
+	//lcdPutS(scoreText, 100, 230, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+
+	//lcdPutS("opakovany vypis:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+
+	//lcdPutS("TEXT velkosti 3:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+
+
+	//char demoText[] = "abcdefghijklmnopqrstuvwxyz0123456789,.!?()+-_*/=%";
+
+	//lcdPutSSized(demoText, 220, 20, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0), 3);
+	//LL_mDelay(2000);
+	//lcdPutSSized(demoText, 220, 20, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0), 3);
+	//lcdPutS("TEXT velkosti 3:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+	//lcdPutS("ANIMACIE:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+
+	//-----------------------------------------------------------------------------------------------------animovane stvorce-----------------------------------------------------------------------------------------------------
+
 	for (int16_t i = 0; i<20; i++){
 	  lcdRectangle(20+i*10, 50, 100+i*10, 130, decodeRgbValue(255, 255, 255));
 	  lcdRectangle(20+i*10, 50, 100+i*10, 130, decodeRgbValue(0, 0, 0));
@@ -859,22 +930,27 @@ void demoPlot(){
 	  lcdDottedRectangle(20+i*10, 50, 100+i*10, 130, decodeRgbValue(255, 255, 255), 5);
 	  lcdDottedRectangle(20+i*10, 50, 100+i*10, 130, decodeRgbValue(0, 0, 0), 5);
 	}
-	// animovany kruh
+	//-----------------------------------------------------------------------------------------------------animovany kruh-----------------------------------------------------------------------------------------------------
+
 	for (int16_t i = 0; i<10; i++){
 	  lcdDottedCircle(60+i*10, 100, 50, decodeRgbValue(255, 255, 255), 3);
 	  lcdDottedCircle(60+i*10, 100, 50, decodeRgbValue(0, 0, 0), 3);
 	}
 	lcdPutS("ANIMACIE:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
 	lcdPutS("POLYGONY:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-	//testujem polygon
+
+	//-----------------------------------------------------------------------------------------------------testujem polygon-----------------------------------------------------------------------------------------------------
+
 	lcdPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(255, 255, 255));
 	LL_mDelay(200);
 	lcdPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(0, 0, 0));
 	lcdDottedPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(255, 255, 255), 3);
 	LL_mDelay(200);
 	lcdDottedPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(0, 0, 0), 3);
-	//testujem plneny trojuholnik a taktiez plneny polygon
-	lcdFilledTriangle( Triangle, decodeRgbValue(255, 255, 255) );
+
+	//-----------------------------------------------------------------------------------------------------testujem plneny trojuholnik a taktiez plneny polygon-----------------------------------------------------------------------------------------------------
+
+    lcdFilledTriangle( Triangle, decodeRgbValue(255, 255, 255) );
 	LL_mDelay(200);
 	lcdFilledTriangle( Triangle, decodeRgbValue(0, 0, 0) );
 	lcdFilledPolygon( Square, sizeof(Square) / (2 * sizeof(Square[0])), decodeRgbValue(255, 255, 255) );
@@ -888,24 +964,32 @@ void demoPlot(){
 	lcdFilledDottedPolygon( Pentagon, sizeof(Pentagon) / (2 * sizeof(Pentagon[0])), decodeRgbValue(0, 0, 0), 3 );
 	lcdPutS("POLYGONY:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
 	lcdPutS("STVORCE:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-	//TESTUJEM VYKRESLENIE STVORCOV
+
+	//-----------------------------------------------------------------------------------------------------TESTUJEM VYKRESLENIE STVORCOV-----------------------------------------------------------------------------------------------------
+
 	lcdRectangle(30, 30, 170, 170, decodeRgbValue(255, 255, 255));
 	LL_mDelay(200);
 	lcdRectangle(30, 30, 170, 170, decodeRgbValue(0, 0, 0));
 	lcdDottedRectangle(30, 30, 170, 170, decodeRgbValue(255, 255, 255), 3);
 	LL_mDelay(200);
 	lcdDottedRectangle(30, 30, 170, 170, decodeRgbValue(0, 0, 0), 3);
-	// testujem vykreslenie plneneho stvorca
+
+	//-----------------------------------------------------------------------------------------------------testujem vykreslenie plneneho stvorca-----------------------------------------------------------------------------------------------------
+
 	lcdFilledRectangle(30, 30, 170, 170, decodeRgbValue(255, 255, 255));
 	LL_mDelay(200);
 	lcdFilledRectangle(30, 30, 170, 170, decodeRgbValue(0, 0, 0));
-	//testujem vykreslenie bodkovaneho stvorca
+
+	//-----------------------------------------------------------------------------------------------------testujem vykreslenie bodkovaneho stvorca-----------------------------------------------------------------------------------------------------
+
 	lcdFilledDottedRectangle(30, 30, 170, 170, decodeRgbValue(255, 255, 255), 5);
 	LL_mDelay(200);
 	lcdFilledDottedRectangle(30, 30, 170, 170, decodeRgbValue(0, 0, 0), 5);
 	lcdPutS("STVORCE:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
 	lcdPutS("CIARY:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-	// testujem vykreslenie ciary v oboch smeroch
+
+	//-----------------------------------------------------------------------------------------------------testujem vykreslenie ciary v oboch smeroch-----------------------------------------------------------------------------------------------------
+
 	lcdLine(10, 10, 190, 300, decodeRgbValue(255, 255, 255));
 	LL_mDelay(200);
 	lcdLine(10, 10, 190, 300, decodeRgbValue(0, 0, 0));
@@ -914,14 +998,18 @@ void demoPlot(){
 	lcdLine(10, 10, 300, 150, decodeRgbValue(0, 0, 0));
 	lcdPutS("CIARY:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
 	lcdPutS("KRUHY:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-	// testujem vykreslenie kruhu
+
+	//-----------------------------------------------------------------------------------------------------testujem vykreslenie kruhu-----------------------------------------------------------------------------------------------------
+
 	lcdCircle(100, 100, 80, decodeRgbValue(255, 255, 255));
 	LL_mDelay(200);
 	lcdCircle(100, 100, 80, decodeRgbValue(0, 0, 0));
 	lcdDottedCircle(100, 100, 80, decodeRgbValue(255, 255, 255), 3);
 	LL_mDelay(200);
 	lcdDottedCircle(100, 100, 80, decodeRgbValue(0, 0, 0), 3);
-	//testujem vykreslenie plneho kruhu
+
+	//-----------------------------------------------------------------------------------------------------testujem vykreslenie plneho kruhu-----------------------------------------------------------------------------------------------------
+
 	lcdFilledCircle(100, 100, 80, decodeRgbValue(255, 255, 255));
 	LL_mDelay(200);
 	lcdFilledCircle(100, 100, 80, decodeRgbValue(0, 0, 0));
@@ -929,4 +1017,5 @@ void demoPlot(){
 	LL_mDelay(500);
 	lcdFilledDottedCircle(100, 100, 80, decodeRgbValue(0, 0, 0), 5);
 	lcdPutS("KRUHY:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+
 }
