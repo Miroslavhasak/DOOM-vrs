@@ -17,7 +17,6 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
-
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "spi.h"
@@ -54,6 +53,8 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void MX_GPIO_Init(void);
+void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -69,22 +70,18 @@ uint8_t rx_data = 0;
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
 
-
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);
+	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
 
-
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);
-  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
-
-  NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
-
-  /* System interrupt init*/
+	NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
 
   /* USER CODE BEGIN Init */
 
@@ -107,24 +104,36 @@ int main(void)
 
   LL_mDelay(1);
 
-  lcdInitialise(LCD_ORIENTATION3);
-  //lcdClearDisplay(decodeRgbValue(80, 0, 0));
+  uint8_t buttonD4_val = 1;
 
-  //vycistit dostupne pixely
-  lcdFilledRectangle(0, 0, 255, 239, decodeRgbValue(0, 0, 0));
-  //vycistit nedostupne pixely
-  lcdFilledRectangle(255, 0, 512, 239, decodeRgbValue(10, 10, 10));
-  lcdLine(0, 0, 0, 239, decodeRgbValue(0, 0, 0));
-  lcdLine(255, 0, 255, 239, decodeRgbValue(0, 0, 0));
+  /* USER CODE BEGIN 2 */
+  	  lcdInitialise(LCD_ORIENTATION3);
+    //lcdClearDisplay(decodeRgbValue(80, 0, 0));
 
+    //vycistit dostupne pixely
+    lcdFilledRectangle(0, 0, 255, 239, decodeRgbValue(0, 0, 0));
+    //vycistit nedostupne pixely
+    lcdFilledRectangle(255, 0, 512, 239, decodeRgbValue(0, 0, 0));
+    lcdLine(0, 0, 0, 239, decodeRgbValue(0, 0, 0));
+    lcdLine(255, 0, 255, 239, decodeRgbValue(0, 0, 0));
+  /* USER CODE END 2 */
 
-	// demo cyklus, kde testujem vykreslovanie a animaciu, potom tu bude game logic a menu asi
-	while (1)
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+	//buttonD4_val = LL_GPIO_ReadInputPort(LL_GPIO_PIN_ALL);
+	buttonD4_val = LL_GPIO_IsInputPinSet(GPIOB,GPIO_PIN_4);
+	if(buttonD4_val == 0)
 	{
-		demoPlot();
-		LL_mDelay(300);
+	  demoPlot();
+	  LL_mDelay(300);
 	}
-/* USER CODE END 3 */
+  }
+  /* USER CODE END 3 */
 }
 
 /**
@@ -133,34 +142,47 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
-  LL_FLASH_SetLatency(LL_FLASH_LATENCY_0);
+	LL_FLASH_SetLatency(LL_FLASH_LATENCY_0);
 
-  if(LL_FLASH_GetLatency() != LL_FLASH_LATENCY_0)
-  {
-  Error_Handler();
-  }
-  LL_RCC_HSI_Enable();
+	  if(LL_FLASH_GetLatency() != LL_FLASH_LATENCY_0)
+	  {
+	  Error_Handler();
+	  }
+	  LL_RCC_HSI_Enable();
 
-   /* Wait till HSI is ready */
-  while(LL_RCC_HSI_IsReady() != 1)
-  {
+	   /* Wait till HSI is ready */
+	  while(LL_RCC_HSI_IsReady() != 1)
+	  {
 
-  }
-  LL_RCC_HSI_SetCalibTrimming(16);
-  LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
-  LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
-  LL_RCC_SetAPB2Prescaler(LL_RCC_APB1_DIV_1);
-  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_HSI);
+	  }
+	  LL_RCC_HSI_SetCalibTrimming(16);
+	  LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
+	  LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
+	  LL_RCC_SetAPB2Prescaler(LL_RCC_APB1_DIV_1);
+	  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_HSI);
 
-   /* Wait till System clock is ready */
-  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_HSI)
-  {
+	   /* Wait till System clock is ready */
+	  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_HSI)
+	  {
 
-  }
-  LL_Init1msTick(8000000);
-  LL_SYSTICK_SetClkSource(LL_SYSTICK_CLKSOURCE_HCLK);
-  LL_SetSystemCoreClock(8000000);
+	  }
+	  LL_Init1msTick(8000000);
+	  LL_SYSTICK_SetClkSource(LL_SYSTICK_CLKSOURCE_HCLK);
+	  LL_SetSystemCoreClock(8000000);
 }
+
+/**
+  * @brief SPI1 Initialization Function
+  * @param None
+  * @retval None
+  */
+
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
 
 /* USER CODE BEGIN 4 */
 
@@ -186,7 +208,7 @@ void Error_Handler(void)
   * @param  line: assert_param error line source number
   * @retval None
   */
-void assert_failed(char *file, uint32_t line)
+void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
@@ -194,5 +216,3 @@ void assert_failed(char *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
