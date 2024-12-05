@@ -181,14 +181,14 @@ void lcdClearDisplay(uint16_t colour)
 {
 	uint32_t pixel;
 
-	// Set the column address to 0-127
+	// Set the column address to 0-319
 	lcdWriteCommand(SET_COLUMN_ADDRESS);
 	lcdWriteParameter(0x00);
 	lcdWriteParameter(0x00);
 	lcdWriteParameter(0x01);
 	lcdWriteParameter(0x3F);
 
-	// Set the page address to 0-127
+	// Set the page address to 0-239
 	lcdWriteCommand(SET_PAGE_ADDRESS);
 	lcdWriteParameter(0x00);
 	lcdWriteParameter(0x00);
