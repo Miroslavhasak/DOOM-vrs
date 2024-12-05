@@ -61,20 +61,11 @@ void lcdWriteCommand(uint8_t address) //urcuje obsah nasledujucich write data/pa
 	cs_set();
 }
 
-void lcdWriteParameter(int16_t parameter) //tymto sa zapisuju rozne veci
+void lcdWriteParameter(int8_t parameter) //tymto sa zapisuju rozne veci
 {
 	cd_set();
 	cs_reset();
-	readWriteSPI1(parameter); //original
-	/*if (parameter > 0xFF) {
-		 //If parameter is larger than 8 bits, split it into high and low bytes
-		readWriteSPI1((uint8_t)(parameter >> 8)); // Send high byte
-		readWriteSPI1((uint8_t)(parameter & 0xFF)); // Send low byte
-	}
-	else {
-		 //If parameter is 8 bits or less, send it directly
-		readWriteSPI1((uint8_t)(parameter & 0xFF));
-	}*/
+	readWriteSPI1(parameter);
 	cs_set();
 }
 
@@ -162,17 +153,18 @@ void lcdInitialise(uint8_t orientation)
     lcdWriteCommand(VCOM_OFFSET_CONTROL);
     lcdWriteParameter(0x40); // nVM = 0, VMF = 64: VCOMH output = VMH, VCOML output = VML
 
-    lcdWriteCommand(SET_COLUMN_ADDRESS);
-    lcdWriteParameter(0x00); // XSH
-    lcdWriteParameter(0x00); // XSL
-    lcdWriteParameter(0x01); // End Column High Byte
-    lcdWriteParameter(0x3F); // End Column Low Byte 319
+    // here we set orientation for every pixel (first we define addresses)
+	lcdWriteCommand(SET_COLUMN_ADDRESS);
+	lcdWriteParameter(0x00); // X high start byte
+	lcdWriteParameter(0x00); // X low start byte
+	lcdWriteParameter(0x01); // X high end byte
+	lcdWriteParameter(0x3F); // X low end byte - 319
 
-    lcdWriteCommand(SET_PAGE_ADDRESS);
-    lcdWriteParameter(0x00);
-    lcdWriteParameter(0x00);
-    lcdWriteParameter(0x00); // End Page High Byte
-    lcdWriteParameter(0xEF); // End Page Low Byte (239, 0x00EF in hex)
+	lcdWriteCommand(SET_PAGE_ADDRESS);
+	lcdWriteParameter(0x00); // Y high start byte
+	lcdWriteParameter(0x00); // Y low start byte
+	lcdWriteParameter(0x00); // Y high end byte
+	lcdWriteParameter(0xEF); // Y low end byte (239, 0x00EF in hex)
 
 	// Select display orientation
     lcdWriteCommand(SET_ADDRESS_MODE);
@@ -187,28 +179,29 @@ void lcdInitialise(uint8_t orientation)
 
 void lcdClearDisplay(uint16_t colour)
 {
-	uint16_t pixel;
+	uint32_t pixel;
 
 	// Set the column address to 0-127
 	lcdWriteCommand(SET_COLUMN_ADDRESS);
 	lcdWriteParameter(0x00);
 	lcdWriteParameter(0x00);
-	lcdWriteParameter(0x00);
-	lcdWriteParameter(0x7f);
+	lcdWriteParameter(0x01);
+	lcdWriteParameter(0x3F);
 
 	// Set the page address to 0-127
 	lcdWriteCommand(SET_PAGE_ADDRESS);
 	lcdWriteParameter(0x00);
 	lcdWriteParameter(0x00);
 	lcdWriteParameter(0x00);
-	lcdWriteParameter(0x7f);
+	lcdWriteParameter(0xEF);
 
 	// Plot the pixels
 	lcdWriteCommand(WRITE_MEMORY_START);
-	for(pixel = 0; pixel < 16385; pixel++)
+	for(pixel = 0; pixel < 76799; pixel++)
 	{
 		lcdWriteData(colour >> 8, colour);
 	}
+
 }
 
 // changing a single pixel on display
@@ -216,22 +209,21 @@ void lcdPlot(int16_t x, int16_t y, uint16_t colour)
 {
 	// Horizontal Address Start Position
 	lcdWriteCommand(SET_COLUMN_ADDRESS);
-	lcdWriteParameter(0x00);
+	lcdWriteParameter(x >> 8);
 	lcdWriteParameter(x);
-	lcdWriteParameter(0x00);
-	lcdWriteParameter(0x013F);//319
+	lcdWriteParameter(0x01);
+	lcdWriteParameter(0x3F);//319
 
 	// Vertical Address end Position
 	lcdWriteCommand(SET_PAGE_ADDRESS);
-	lcdWriteParameter(0x00);
+	lcdWriteParameter(y >> 8);
 	lcdWriteParameter(y);
 	lcdWriteParameter(0x00);
 	lcdWriteParameter(0xEF);//239
 
 	// Plot the point
 	lcdWriteCommand(WRITE_MEMORY_START);
-	if((x>=0)&&(x<256)&&(y>=0)&&(y<240)) //check if pixel is inside the bounds
-		lcdWriteData(colour >> 8, colour);
+	lcdWriteData(colour >> 8, colour);
 }
 
 void lcdLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour)
@@ -392,7 +384,7 @@ void lcdDottedRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t
 // Draw a filled rectangle
 void lcdFilledRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour)
 {
-	uint16_t pixels;
+	uint32_t pixels;
 	int16_t pom = 0;
 	if (x0>x1){	//x1 must be greater than x0
 		pom = x0;
@@ -409,15 +401,15 @@ void lcdFilledRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t
 	// rectangle and then just output the required number of bytes to
 	// fill down to the end point
 	lcdWriteCommand(SET_COLUMN_ADDRESS); // Horizontal Address Start Position
-	lcdWriteParameter(0x00);
+	lcdWriteParameter(x0 >> 8);
 	lcdWriteParameter(x0);
-	lcdWriteParameter(0x00);
+	lcdWriteParameter(x1 >> 8);
 	lcdWriteParameter(x1);
 
 	lcdWriteCommand(SET_PAGE_ADDRESS); // Vertical Address end Position
-	lcdWriteParameter(0x00);
+	lcdWriteParameter(y0 >> 8);
 	lcdWriteParameter(y0);
-	lcdWriteParameter(0x00);
+	lcdWriteParameter(y1 >> 8);
 	lcdWriteParameter(y1);
 
 	lcdWriteCommand(WRITE_MEMORY_START);
@@ -678,7 +670,7 @@ void lcdFilledDottedCircle(int16_t xCentre, int16_t yCentre, int16_t radius, uin
 // LCD text manipulation functions --------------------------------------------------------------------------
 #define pgm_read_byte_near(address_short) (uint16_t)(address_short)
 // Plot a character at the specified x, y co-ordinates (top left hand corner of character)
-void lcdPutCh(unsigned char character, uint8_t x, uint8_t y, uint16_t fgColour, uint16_t bgColour)
+void lcdPutCh(unsigned char character, int16_t x, int16_t y, uint16_t fgColour, uint16_t bgColour)
 {
 	uint8_t row, column;
 
@@ -687,16 +679,16 @@ void lcdPutCh(unsigned char character, uint8_t x, uint8_t y, uint16_t fgColour, 
 	// update the memory pointer saving us a good few bytes
 
 	lcdWriteCommand(SET_COLUMN_ADDRESS); // Horizontal Address Start Position
-	lcdWriteParameter(0x00);
+	lcdWriteParameter(x >> 8);
 	lcdWriteParameter(x);
-	lcdWriteParameter(0x00);
+	lcdWriteParameter((x+5) >> 8);
 	lcdWriteParameter(x+5);
 
 	lcdWriteCommand(SET_PAGE_ADDRESS); // Vertical Address end Position
-	lcdWriteParameter(0x00);
+	lcdWriteParameter(y >> 8);
 	lcdWriteParameter(y);
 	lcdWriteParameter(0x00);
-	lcdWriteParameter(0x7f);
+	lcdWriteParameter(0xEF);
 
 	lcdWriteCommand(WRITE_MEMORY_START);
 
@@ -716,7 +708,7 @@ void lcdPutCh(unsigned char character, uint8_t x, uint8_t y, uint16_t fgColour, 
 	}
 }
 
-void lcdPutChSized(unsigned char character, uint8_t x, uint8_t y, uint16_t fgColour, uint16_t bgColour, uint8_t size)
+void lcdPutChSized(unsigned char character, int16_t x, int16_t y, uint16_t fgColour, uint16_t bgColour, uint8_t size)
 {
 	uint8_t row, column;
 
@@ -725,16 +717,16 @@ void lcdPutChSized(unsigned char character, uint8_t x, uint8_t y, uint16_t fgCol
 	// update the memory pointer saving us a good few bytes
 
 	lcdWriteCommand(SET_COLUMN_ADDRESS); // Horizontal Address Start Position
-	lcdWriteParameter(0x00);
+	lcdWriteParameter(x >> 8);
 	lcdWriteParameter(x);
-	lcdWriteParameter(0x00);
+	lcdWriteParameter((x+5*size) >> 8);
 	lcdWriteParameter(x+5*size);
 
 	lcdWriteCommand(SET_PAGE_ADDRESS); // Vertical Address end Position
-	lcdWriteParameter(0x00);
+	lcdWriteParameter(y >> 8);
 	lcdWriteParameter(y);
 	lcdWriteParameter(0x00);
-	lcdWriteParameter(0x7f);
+	lcdWriteParameter(0xEF);
 
 	lcdWriteCommand(WRITE_MEMORY_START);
 
@@ -767,10 +759,10 @@ uint8_t lcdTextX(uint8_t x) { return x*6; }
 uint8_t lcdTextY(uint8_t y) { return y*8; }
 
 // Plot a string of characters to the LCD
-void lcdPutS(const char *string, uint8_t x, uint8_t y, uint16_t fgColour, uint16_t bgColour)
+void lcdPutS(const char *string, int16_t x, int16_t y, uint16_t fgColour, uint16_t bgColour)
 {
-	uint8_t origin = x;
-	uint8_t characterNumber;
+	int16_t origin = x;
+	int16_t characterNumber;
 
 	for (characterNumber = 0; characterNumber < strlen(string); characterNumber++)
 	{
@@ -792,11 +784,11 @@ void lcdPutS(const char *string, uint8_t x, uint8_t y, uint16_t fgColour, uint16
 }
 
 // Plot a string of characters to the LCD
-void lcdPutSSized(const char *string, uint8_t x, uint8_t y, uint16_t fgColour, uint16_t bgColour, uint8_t size)
+void lcdPutSSized(const char *string, int16_t x, int16_t y, uint16_t fgColour, uint16_t bgColour, uint8_t size)
 {
 	x = x-size*6;
-	uint8_t origin = x;
-	uint8_t characterNumber;
+	int16_t origin = x;
+	int16_t characterNumber;
 
 	for (characterNumber = 0; characterNumber < strlen(string); characterNumber++)
 	{

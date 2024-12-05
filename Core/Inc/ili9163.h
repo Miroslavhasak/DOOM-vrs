@@ -160,10 +160,10 @@ void lcdDottedCircle(int16_t xCentre, int16_t yCentre, int16_t radius, uint16_t 
 void lcdFilledCircle(int16_t xCentre, int16_t yCentre, int16_t radius, uint16_t colour);
 void lcdFilledDottedCircle(int16_t xCentre, int16_t yCentre, int16_t radius, uint16_t colour, uint16_t step);
 
-void lcdPutCh(unsigned char character, uint8_t x, uint8_t y, uint16_t fgColour, uint16_t bgColour);
-void lcdPutChSized(unsigned char character, uint8_t x, uint8_t y, uint16_t fgColour, uint16_t bgColour, uint8_t size);
-void lcdPutS(const char *string, uint8_t x, uint8_t y, uint16_t fgColour, uint16_t bgColour);
-void lcdPutSSized(const char *string, uint8_t x, uint8_t y, uint16_t fgColour, uint16_t bgColour, uint8_t size);
+void lcdPutCh(unsigned char character, int16_t x, int16_t y, uint16_t fgColour, uint16_t bgColour);
+void lcdPutChSized(unsigned char character, int16_t x, int16_t y, uint16_t fgColour, uint16_t bgColour, uint8_t size);
+void lcdPutS(const char *string, int16_t x, int16_t y, uint16_t fgColour, uint16_t bgColour);
+void lcdPutSSized(const char *string, int16_t x, int16_t y, uint16_t fgColour, uint16_t bgColour, uint8_t size);
 void demoPlot();
 
 #endif /* ILI9163LCD_H_ */

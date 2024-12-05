@@ -107,15 +107,9 @@ int main(void)
   uint8_t buttonD4_val = 1;
 
   /* USER CODE BEGIN 2 */
-  	  lcdInitialise(LCD_ORIENTATION3);
-    //lcdClearDisplay(decodeRgbValue(80, 0, 0));
+  lcdInitialise(LCD_ORIENTATION3);
+  lcdClearDisplay(decodeRgbValue(0, 0, 0));
 
-    //vycistit dostupne pixely
-    lcdFilledRectangle(0, 0, 255, 239, decodeRgbValue(0, 0, 0));
-    //vycistit nedostupne pixely
-    lcdFilledRectangle(255, 0, 512, 239, decodeRgbValue(0, 0, 0));
-    lcdLine(0, 0, 0, 239, decodeRgbValue(0, 0, 0));
-    lcdLine(255, 0, 255, 239, decodeRgbValue(0, 0, 0));
   /* USER CODE END 2 */
 
   /* Infinite loop */
