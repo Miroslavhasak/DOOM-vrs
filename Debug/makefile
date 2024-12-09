@@ -60,8 +60,8 @@ all: main-build
 main-build: DOOM.elf secondary-outputs
 
 # Tool invocations
-DOOM.elf DOOM.map: $(OBJS) $(USER_OBJS) C:\Users\mahav\Desktop\VRS\DOOM\STM32F303K8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "DOOM.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\mahav\Desktop\VRS\DOOM\STM32F303K8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="DOOM.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+DOOM.elf DOOM.map: $(OBJS) $(USER_OBJS) C:\Users\marti\DOOM-vrs\STM32F303K8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "DOOM.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\marti\DOOM-vrs\STM32F303K8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="DOOM.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

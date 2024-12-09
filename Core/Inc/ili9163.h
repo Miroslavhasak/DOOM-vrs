@@ -137,7 +137,7 @@ uint8_t lcdTextY(uint8_t y);
 //	LCD function prototypes
 void lcdReset(void);
 void lcdWriteCommand(uint8_t address);
-void lcdWriteParameter(int16_t parameter);
+void lcdWriteParameter(int8_t parameter);
 void lcdWriteData(uint8_t dataByte1, uint8_t dataByte2);
 void lcdInitialise(uint8_t orientation);
 
@@ -145,6 +145,8 @@ void lcdClearDisplay(uint16_t colour);
 void lcdPlot(int16_t x, int16_t y, uint16_t colour);
 void lcdLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour);
 void lcdDottedLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour, uint16_t step);
+void lcdPolyline(int16_t *points, int16_t lines, uint16_t colour);
+void lcdDottedPolyline(int16_t *points, int16_t lines, uint16_t colour, uint16_t step);
 void lcdRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour);
 void lcdDottedRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour, uint16_t step);
 void lcdFilledRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour);
@@ -164,6 +166,9 @@ void lcdPutCh(unsigned char character, int16_t x, int16_t y, uint16_t fgColour, 
 void lcdPutChSized(unsigned char character, int16_t x, int16_t y, uint16_t fgColour, uint16_t bgColour, uint8_t size);
 void lcdPutS(const char *string, int16_t x, int16_t y, uint16_t fgColour, uint16_t bgColour);
 void lcdPutSSized(const char *string, int16_t x, int16_t y, uint16_t fgColour, uint16_t bgColour, uint8_t size);
-void demoPlot();
+uint8_t threeDto2D(int16_t *points, float *playerCoord, float alpha, float *twoDCoords);
+void lcd3DPolygon(int16_t *points, int16_t sides, uint16_t colour, float px, float py, float pz, float alpha, int8_t dotted, int8_t step);
+void lcd3DPolyline(int16_t *points, int16_t sides, uint16_t colour, float px, float py, float pz, float alpha, int8_t dotted, int8_t step);
+//void demoPlot();
 
 #endif /* ILI9163LCD_H_ */

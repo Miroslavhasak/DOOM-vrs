@@ -22,8 +22,10 @@
 #include "spi.h"
 #include "gpio.h"
 #include "ili9163.h"
+#include "menu.h"
 #include <stdio.h>
 #include <string.h>
+#include <gameLogic.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -104,7 +106,7 @@ int main(void)
 
   LL_mDelay(1);
 
-  uint8_t buttonD4_val = 1;
+  uint8_t buttonD4_val = 1;		//NOT NEEDED NOW
 
   /* USER CODE BEGIN 2 */
   lcdInitialise(LCD_ORIENTATION3);
@@ -120,10 +122,11 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	//buttonD4_val = LL_GPIO_ReadInputPort(LL_GPIO_PIN_ALL);
+
 	buttonD4_val = LL_GPIO_IsInputPinSet(GPIOB,GPIO_PIN_4);
 	if(buttonD4_val == 0)
 	{
-	  demoPlot();
+	  menu();
 	  LL_mDelay(300);
 	}
   }

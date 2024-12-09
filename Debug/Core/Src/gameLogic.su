@@ -1,0 +1,10 @@
+../Core/Src/gameLogic.c:18:6:initPolygon	32	static
+../Core/Src/gameLogic.c:32:6:addPolygon	16	static
+../Core/Src/gameLogic.c:42:6:removePolygon	24	static
+../Core/Src/gameLogic.c:58:6:initPolygons	112	static
+../Core/Src/gameLogic.c:153:6:freePolygons	16	static
+../Core/Src/gameLogic.c:160:6:initPlayer	4	static
+../Core/Src/gameLogic.c:169:6:movePlayer	32	static
+../Core/Src/gameLogic.c:180:6:rotatePlayer	16	static
+../Core/Src/gameLogic.c:190:6:startNewGame	8	static
+../Core/Src/gameLogic.c:196:6:gameLoop	80	static

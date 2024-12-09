@@ -267,16 +267,19 @@ void lcdLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour)
 
 			if (fraction >= 0) //when we move up 1 pixel on Y axis
 			{
-				lcdFilledRectangle(partialLineStartCoord+1, y0, x0, y0, colour);
+				if((y0>0)&&(y0<255)) {
+					lcdFilledRectangle(partialLineStartCoord+1, y0, x0, y0, colour);
+				}
 				partialLineStartCoord = x0;
 				y0 += stepy;
 				fraction -= dx;
 			}
-
 			x0 += stepx;
 			fraction += dy;
 		}
-		lcdFilledRectangle(partialLineStartCoord+1, y0, x0, y0, colour);
+		if((y0>0)&&(y0<255)) {
+			lcdFilledRectangle(partialLineStartCoord+1, y0, x0, y0, colour);
+		}
 	}
 	else			//viac nez 45 stupnov
 	{
@@ -286,16 +289,19 @@ void lcdLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour)
 		{
 			if (fraction >= 0)	//when we move up 1 pixel on X axis
 			{
-				lcdFilledRectangle(x0, partialLineStartCoord+1, x0, y0, colour);
+				if((y0>0)&&(y0<255)&&(partialLineStartCoord+1>0)&&(partialLineStartCoord+1<255)) {
+					lcdFilledRectangle(x0, partialLineStartCoord+1, x0, y0, colour);
+				}
 				partialLineStartCoord = y0;
 				x0 += stepx;
 				fraction -= dy;
 			}
-
 			y0 += stepy;
 			fraction += dx;
 		}
-		lcdFilledRectangle(x0, partialLineStartCoord+1, x0, y0, colour);
+		if((y0>0)&&(y0<255)&&(partialLineStartCoord+1>0)&&(partialLineStartCoord+1<255)) {
+			lcdFilledRectangle(x0, partialLineStartCoord+1, x0, y0, colour);
+		}
 	}
 }
 
@@ -306,18 +312,19 @@ void lcdDottedLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colo
 	int16_t stepx, stepy;
 	int16_t delta = 0;
 	int16_t astep = 0;
+	int16_t stp = 0;
 
 	if (dy < 0)
 	{
-		dy = -dy; stepy = -step;
+		dy = -dy; stepy = -1;
 	}
-	else stepy = step;
+	else stepy = 1;
 
  	if (dx < 0)
 	{
-		dx = -dx; stepx = -step;
+		dx = -dx; stepx = -1;
 	}
-	else stepx = step;
+	else stepx = 1;
 
 	dy <<= 1;
 	dx <<= 1;
@@ -333,12 +340,13 @@ void lcdDottedLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colo
 				y0 += stepy;
 				fraction -= dx;
 			}
-
-			lcdPlot(x0, y0, colour);
+			if((stp%step==0)&&(y0>0)&&(y0<255)) {
+				lcdPlot(x0, y0, colour);
+			}
    			x0 += stepx;
    			delta = delta - astep;
    			fraction += dy;
-
+   			stp++;
 		}
 	}
 	else
@@ -353,13 +361,35 @@ void lcdDottedLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colo
 				x0 += stepx;
 				fraction -= dy;
 			}
-
-			lcdPlot(x0, y0, colour);
+			if((stp%step==0)&&(y0>0)&&(y0<255)) {
+				lcdPlot(x0, y0, colour);
+			}
 			y0 += stepy;
 			delta = delta - astep;
 			fraction += dx;
-
+			stp++;
 		}
+	}
+}
+
+void lcdPolyline(int16_t *points, int16_t lines, uint16_t colour)
+{
+	for(int16_t i = 0; i<lines-1; i++){
+		int16_t x0 = points[2*i];
+		int16_t y0 = points[2*i + 1];
+		int16_t x1 = points[2*(i+1)];
+		int16_t y1 = points[2*(i+1) + 1];
+		lcdLine(x0, y0, x1, y1, colour);
+	}
+}
+void lcdDottedPolyline(int16_t *points, int16_t lines, uint16_t colour, uint16_t step)
+{
+	for(int16_t i = 0; i<lines-1; i++){
+		int16_t x0 = points[2*i];
+		int16_t y0 = points[2*i + 1];
+		int16_t x1 = points[2*(i+1)];
+		int16_t y1 = points[2*(i+1) + 1];
+		lcdDottedLine(x0, y0, x1, y1, colour, step);
 	}
 }
 
@@ -397,24 +427,32 @@ void lcdFilledRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t
 		y1 = pom;
 	}
 
-	// To speed up plotting we define a x window with the width of the
-	// rectangle and then just output the required number of bytes to
-	// fill down to the end point
-	lcdWriteCommand(SET_COLUMN_ADDRESS); // Horizontal Address Start Position
-	lcdWriteParameter(x0 >> 8);
-	lcdWriteParameter(x0);
-	lcdWriteParameter(x1 >> 8);
-	lcdWriteParameter(x1);
+	if((y1>0)&&(y0<255)){	//to prevent plotting nonsense
+		if(y0<0) {	//
+			y0 = 0;
+		}
+		if(y1>255) {
+			y1 = 255;
+		}
+		// To speed up plotting we define a x window with the width of the
+		// rectangle and then just output the required number of bytes to
+		// fill down to the end point
+		lcdWriteCommand(SET_COLUMN_ADDRESS); // Horizontal Address Start Position
+		lcdWriteParameter(x0 >> 8);
+		lcdWriteParameter(x0);
+		lcdWriteParameter(x1 >> 8);
+		lcdWriteParameter(x1);
 
-	lcdWriteCommand(SET_PAGE_ADDRESS); // Vertical Address end Position
-	lcdWriteParameter(y0 >> 8);
-	lcdWriteParameter(y0);
-	lcdWriteParameter(y1 >> 8);
-	lcdWriteParameter(y1);
+		lcdWriteCommand(SET_PAGE_ADDRESS); // Vertical Address end Position
+		lcdWriteParameter(y0 >> 8);
+		lcdWriteParameter(y0);
+		lcdWriteParameter(y1 >> 8);
+		lcdWriteParameter(y1);
 
-	lcdWriteCommand(WRITE_MEMORY_START);
-	for (pixels = 0; pixels < (((x1+1) - x0) * ((y1+1) - y0)); pixels++)
-			lcdWriteData(colour >> 8, colour);
+		lcdWriteCommand(WRITE_MEMORY_START);
+		for (pixels = 0; pixels < (((x1+1) - x0) * ((y1+1) - y0)); pixels++)
+				lcdWriteData(colour >> 8, colour);
+	}
 }
 
 void lcdFilledDottedRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour, uint16_t step)
@@ -428,23 +466,39 @@ void lcdFilledDottedRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, ui
 
 void lcdPolygon(int16_t *points, int16_t sides, uint16_t colour)
 {
-	for(int16_t i = 0; i<sides; i++){
-		int16_t x0 = points[(2*i)];
-		int16_t y0 = points[(2*i + 1)];
-		int16_t x1 = points[(2*((i+1)%sides))];
-		int16_t y1 = points[(2*((i+1)%sides) + 1)];
-		lcdLine(x0, y0, x1, y1, colour);
+	if(sides>2) {
+		for(int16_t i = 0; i<sides; i++){
+			int16_t x0 = points[(2*i)];
+			int16_t y0 = points[(2*i + 1)];
+			int16_t x1 = points[(2*((i+1)%sides))];
+			int16_t y1 = points[(2*((i+1)%sides) + 1)];
+			lcdLine(x0, y0, x1, y1, colour);
+		}
+	}
+	else if(sides==2) {
+		lcdLine(points[0], points[1], points[2], points[3], colour);
+	}
+	else if(sides==1) {
+		lcdPlot(points[0], points[1], colour);
 	}
 }
 
 void lcdDottedPolygon(int16_t *points, int16_t sides, uint16_t colour, uint16_t step)
 {
-	for(int16_t i = 0; i<sides; i++){
-		int16_t x0 = points[(2*i)];
-		int16_t y0 = points[(2*i + 1)];
-		int16_t x1 = points[(2*((i+1)%sides))];
-		int16_t y1 = points[(2*((i+1)%sides) + 1)];
-		lcdDottedLine(x0, y0, x1, y1, colour, step);
+	if(sides>2) {
+		for(int16_t i = 0; i<sides; i++){
+			int16_t x0 = points[(2*i)];
+			int16_t y0 = points[(2*i + 1)];
+			int16_t x1 = points[(2*((i+1)%sides))];
+			int16_t y1 = points[(2*((i+1)%sides) + 1)];
+			lcdDottedLine(x0, y0, x1, y1, colour, step);
+		}
+	}
+	else if(sides==2) {
+		lcdDottedLine(points[0], points[1], points[2], points[3], colour, step);
+	}
+	else if(sides==1) {
+		lcdPlot(points[0], points[1], colour);
 	}
 }
 
@@ -814,156 +868,114 @@ void lcdPutSSized(const char *string, int16_t x, int16_t y, uint16_t fgColour, u
 	}
 }
 
-void demoPlot(){
+uint8_t threeDto2D(int16_t *points, float *playerCoord, float alpha, float *twoDCoords) {
+	//points je 1D obsahuje X Y Z bodu
+	float_t dx = (float_t)((float)(points[0]) - playerCoord[0]);
+	float_t dy = (float_t)((float)(points[1]) - playerCoord[1]);
+	float_t dz = (float_t)((float)(points[2]) - playerCoord[2]);
+
+	//float_t vz = sqrt(dx^2 + dy^2 + dz^2);	//vzdialenost od bodu euklidovska
+	float_t vzh = sqrt((dx*dx) + (dy*dy));		//vzdialenost od bodu na xy osi
+
+	//alfa je vlastne horizontalne natocenie kamery
+	//beta je absolutne horizontalne natocenie telesa voci kamere
+	float_t beta = atan(dy/dx) + (dx<=0)*3.1416*((alpha>0)-(alpha<=0));
+	float_t gamma = beta - alpha;	//relativne horizontalne natocenie telesa voci kamere
+
+	uint8_t success = 0;
+	if((gamma>-1.5707)&&(gamma<1.5707)) {
+		success = 1;	//ak je bod za kamerou, tak je to zle, este som to nedomyslel
+	}
+
+	float_t beta2 = atan(dz/vzh);	//kolmost telesa voci kamere
+
+	//beta3 - absolutna kolmost, gamma3 - relativna kolmost telesa voci kamere
+	float_t beta3 = atan(dz/(vzh*cos(gamma))) + ((-1.57 > gamma)||(gamma > 1.57))*3.1416*((dz>0)-(dz<=0));
+	float_t alfa2 = 0; //zatial nie je potreba
+	float_t gamma3 = beta3 - alfa2;
+
+	// zo ziskanych uhlov vypocitame suradnice na obrazovke, 2 najdolezitejsie vzorce
+	//twoDCoords[0] = 160+160*( 1.27 * sin(gamma) * cos(beta2) );	//povodne
+	//twoDCoords[0] = 160+160*( 1.7 *fabs(gamma)*sin(gamma) * cos(beta2) ); //nieco je v pohode, ale nie
+	twoDCoords[0] = 160+160*( 1.27 * gamma * cos(beta2) );	//tiez moze byt
+	//twoDCoords[0] = 160+160*( 1.27 * gamma ); //jednoduche a funguje
+	twoDCoords[1] = 120-160*( gamma3*1.27 ); //1.27
+
+	return success;
+}
+
+//este treba vytvorit hraca s kamerou a prostredie, potom mozem vytvarat utvary
+void lcd3DPolygon(int16_t *points, int16_t sides, uint16_t colour, float px, float py, float pz, float alpha, int8_t dotted, int8_t step){
+	int16_t polygonFormat[2*sides];
+	float_t playerCoord[3] = {px, py, pz};
+	float twoDCoords[2];  // Temporary array for results
+	uint8_t success = 0;
+	for(int16_t i=0; i<sides; i++){
+		success = threeDto2D(&points[3 * i], playerCoord, alpha, twoDCoords);
+		if(!success) return;	//if any point is behing camera it doesn't plot the object
+		polygonFormat[2 * i] = (int16_t)(twoDCoords[0]);
+		polygonFormat[2 * i + 1] = (int16_t)(twoDCoords[1]);
+	}
+	int16_t xRes = 320;
+	int16_t yRes = 240;
+	for(int8_t i=0; i<sides; i++) {
+		if( (polygonFormat[2*i] > 0)&&(polygonFormat[2*i] < xRes)&&(polygonFormat[2*i+1] > 0)&&(polygonFormat[2*i+1] < yRes) ) {
+			if(!dotted) {
+				lcdPolygon( polygonFormat, sides, colour);
+			}
+			else{
+				lcdDottedPolygon( polygonFormat, sides, colour, step);
+			}
+			break;
+		}
+	}
+}
+
+void lcd3DPolyline(int16_t *points, int16_t sides, uint16_t colour, float px, float py, float pz, float alpha, int8_t dotted, int8_t step){
+	int16_t polygonFormat[2*sides];
+	float_t playerCoord[3] = {px, py, pz};
+	float twoDCoords[2];  // Temporary array for results
+	uint8_t success = 0;
+	for(int16_t i=0; i<sides; i++){
+		success = threeDto2D(&points[3 * i], playerCoord, alpha, twoDCoords);
+		if(!success) return;	//if any point is behing camera it doesn't plot the object
+		polygonFormat[2 * i] = (int16_t)(twoDCoords[0]);
+		polygonFormat[2 * i + 1] = (int16_t)(twoDCoords[1]);
+	}
+	int16_t xRes = 320;
+	int16_t yRes = 240;
+	for(int8_t i=0; i<sides; i++) {
+		if( (polygonFormat[2*i] > 0)&&(polygonFormat[2*i] < xRes)&&(polygonFormat[2*i+1] > 0)&&(polygonFormat[2*i+1] < yRes) ) {
+			if(!dotted) {
+				lcdPolyline( polygonFormat, sides, colour);
+			}
+			else{
+				lcdDottedPolyline( polygonFormat, sides, colour, step);
+			}
+			break;
+		}
+	}
+}
+
+void demoPlot(){	//if you want to test print of various objects
 	int16_t Triangle[] = {20, 170, 230, 150, 140, 40};
 	int16_t Square[] = {30, 30, 170, 30, 170, 170, 30, 170};
 	int16_t Pentagon[] = {50, 20, 150, 20, 180, 120, 100, 180, 10, 120};
 
+	int16_t score = 56;
+	char scoreText[16];
+	sprintf(scoreText, "SCORE = %d", score);
+	lcdPutS(scoreText, 100, 230, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
 
-    /*
-	lcdPutS("opakovany vypis:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-	lcdRectangle(15, 225, 240, 250, decodeRgbValue(255, 255, 255)); //dolny status bar
-	lcdCircle(127,232,5,decodeRgbValue(255, 255, 255)); //akysi kruh, v povodnej doom je tam hlava hraca
-    */
+	lcdPutS("TEXT velkosti 3:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
 
-    //-----------------------------------------------------------------------------------------------------hlavne menu-----------------------------------------------------------------------------------------------------
-    // lcdPutS(retazec, suradnica x, suradnica y, farba textu, farba pozadia)
-    // lcdPutSSized(retazec, suradnica x, suradnica y, farba textu, farba pozadia, velkost textu)
-    // 320x240 resolution
-	// ale resolution je zatial 250x240
-	// uberanie x hodnoty posuva text vpravo uberanie y hodnoty posuva text hore
+	char demoText[] = "abcdefghijklmnopqrstuvwxyz0123456789,.!?()+*-/_=%";
+	lcdPutSSized(demoText, 220, 20, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0), 3);
+	LL_mDelay(2000);
+	lcdPutSSized(demoText, 220, 20, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0), 3);
 
-    // lcdPutS("DOOM", 280, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-
-
-	//-----------------------------------------------------------------------------------------------------test printing text (normal, sized, with numbers)-----------------------------------------------------------------------------------------------------
-
-	lcdPutSSized("DOOM", 215, 0, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),8);
-	lcdPutSSized("NEW GAME", 180, 64, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
-	lcdPutSSized("OPTIONS", 180, 80, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
-	lcdPutSSized("LOAD GAME", 180, 96, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
-	lcdPutSSized("SAVE GAME", 180, 112, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
-	lcdPutSSized("READ THIS!", 180, 128, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
-	lcdPutSSized("QUIT GAME", 180, 144, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
-
-
-
-
-	//-----------------------------------------------------------------------------------------------------HUD-----------------------------------------------------------------------------------------------------
-
-	int16_t ammo = 24;
-	int16_t health = 78;
-	int16_t armor = 0;
-	char ammoText[16];
-	char healthText[16];
-	char armorText[16];
-
-
-	lcdPutS("AMMO", 250, 230, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-	sprintf(ammoText, "%d", ammo);
-	lcdPutS(ammoText, 240, 222, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-
-	lcdPutS("HEALTH", 145, 230, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-	sprintf(healthText, "%d%%", health);
-	lcdPutS(healthText, 125, 222, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-
-	lcdPutS("ARMOR", 35, 230, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-	sprintf(armorText, "%d%%", armor);
-	lcdPutS(armorText, 20, 222, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-
-		int select = 0;
-		while(select != 6)
-		{
-
-			if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1) == GPIO_PIN_RESET)
-			{
-				if(select == 0)
-					select = 5;
-				else if(select != 0)
-					select--;
-			}
-
-			if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0) == GPIO_PIN_RESET)
-			{
-				if(select == 5)
-					select = 0;
-				else if(select != 5)
-					select++;
-			}
-
-			if(select == 0)
-			{
-				lcdPutSSized("NEW GAME", 180, 64, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
-				lcdPutSSized("NEW GAME", 180, 64, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
-			}
-			if(select == 1)
-			{
-				lcdPutSSized("OPTIONS", 180, 80, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
-				lcdPutSSized("OPTIONS", 180, 80, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
-			}
-			if(select == 2)
-			{
-				lcdPutSSized("LOAD GAME", 180, 96, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
-				lcdPutSSized("LOAD GAME", 180, 96, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
-			}
-			if(select == 3)
-			{
-				lcdPutSSized("SAVE GAME", 180, 112, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
-				lcdPutSSized("SAVE GAME", 180, 112, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
-			}
-			if(select == 4)
-			{
-				lcdPutSSized("READ THIS!", 180, 128, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
-				lcdPutSSized("READ THIS!", 180, 128, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
-			}
-			if(select == 5)
-			{
-				lcdPutSSized("QUIT GAME", 180, 144, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
-				lcdPutSSized("QUIT GAME", 180, 144, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
-			}
-
-			if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_3) == GPIO_PIN_RESET && select == 0)
-				select = 6;
-
-		}
-
-	lcdPutSSized("DOOM", 215, 0, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),8);
-	lcdPutSSized("NEW GAME", 180, 64, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
-	lcdPutSSized("OPTIONS", 180, 80, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
-	lcdPutSSized("LOAD GAME", 180, 96, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
-	lcdPutSSized("SAVE GAME", 180, 112, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
-	lcdPutSSized("READ THIS!", 180, 128, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
-	lcdPutSSized("QUIT GAME", 180, 144, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
-
-	lcdPutS("AMMO", 250, 230, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
-	sprintf(ammoText, "%d", ammo);
-	lcdPutS(ammoText, 240, 222, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
-
-	lcdPutS("HEALTH", 145, 230, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
-	sprintf(healthText, "%d%%", health);
-	lcdPutS(healthText, 125, 222, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
-
-	lcdPutS("ARMOR", 35, 230, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
-	sprintf(armorText, "%d%%", armor);
-	lcdPutS(armorText, 20, 222, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
-
-	//int16_t score = 56;
-	//char scoreText[16];
-	//sprintf(scoreText, "SCORE = %d", score);
-	//lcdPutS(scoreText, 100, 230, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-
-	//lcdPutS("opakovany vypis:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
-
-	//lcdPutS("TEXT velkosti 3:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
-
-
-	//char demoText[] = "abcdefghijklmnopqrstuvwxyz0123456789,.!?()+-_*/=%";
-
-	//lcdPutSSized(demoText, 220, 20, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0), 3);
-	//LL_mDelay(2000);
-	//lcdPutSSized(demoText, 220, 20, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0), 3);
-	//lcdPutS("TEXT velkosti 3:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
-	//lcdPutS("ANIMACIE:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
+	lcdPutS("TEXT velkosti 3:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
+	lcdPutS("ANIMACIE:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
 
 	//-----------------------------------------------------------------------------------------------------animovane stvorce-----------------------------------------------------------------------------------------------------
 
