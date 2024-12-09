@@ -137,6 +137,7 @@ int main(void)
   * @brief System Clock Configuration
   * @retval None
   */
+
 void SystemClock_Config(void)
 {
 	LL_FLASH_SetLatency(LL_FLASH_LATENCY_0);
@@ -147,7 +148,7 @@ void SystemClock_Config(void)
 	  }
 	  LL_RCC_HSI_Enable();
 
-	   /* Wait till HSI is ready */
+	   // Wait till HSI is ready
 	  while(LL_RCC_HSI_IsReady() != 1)
 	  {
 
@@ -158,7 +159,7 @@ void SystemClock_Config(void)
 	  LL_RCC_SetAPB2Prescaler(LL_RCC_APB1_DIV_1);
 	  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_HSI);
 
-	   /* Wait till System clock is ready */
+	   // Wait till System clock is ready
 	  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_HSI)
 	  {
 

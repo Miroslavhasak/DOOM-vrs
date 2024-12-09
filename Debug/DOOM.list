@@ -29,25 +29,25 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  12 .ARM.attributes 00000030  00000000  00000000  00009080  2**0
                   CONTENTS, READONLY
- 13 .debug_info   000063a8  00000000  00000000  000090b0  2**0
+ 13 .debug_info   000063a0  00000000  00000000  000090b0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_abbrev 00001a3d  00000000  00000000  0000f458  2**0
+ 14 .debug_abbrev 00001a29  00000000  00000000  0000f450  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_aranges 000007d8  00000000  00000000  00010e98  2**3
+ 15 .debug_aranges 000007d8  00000000  00000000  00010e80  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_rnglists 000005d9  00000000  00000000  00011670  2**0
+ 16 .debug_rnglists 000005d9  00000000  00000000  00011658  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_macro  0001c29e  00000000  00000000  00011c49  2**0
+ 17 .debug_macro  0001c29e  00000000  00000000  00011c31  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_line   0000a656  00000000  00000000  0002dee7  2**0
+ 18 .debug_line   0000a64a  00000000  00000000  0002decf  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_str    000a192c  00000000  00000000  0003853d  2**0
+ 19 .debug_str    000a192c  00000000  00000000  00038519  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .comment      00000043  00000000  00000000  000d9e69  2**0
+ 20 .comment      00000043  00000000  00000000  000d9e45  2**0
                   CONTENTS, READONLY
- 21 .debug_frame  00002b48  00000000  00000000  000d9eac  2**2
+ 21 .debug_frame  00002b48  00000000  00000000  000d9e88  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 22 .debug_line_str 00000046  00000000  00000000  000dc9f4  2**0
+ 22 .debug_line_str 00000046  00000000  00000000  000dc9d0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -1127,9 +1127,6 @@ void initPolygons() {
  8000d2c:	b580      	push	{r7, lr}
  8000d2e:	b09a      	sub	sp, #104	@ 0x68
  8000d30:	af00      	add	r7, sp, #0
-		int16_t EastWall4[] = {0, 200*i, 0,   0, 200*i, 100,   0, 200+200*i, 100,   0, 200+200*i, 0};
-		addPolygon(EastWall4, 4, decodeRgbValue(255, 255, 0)); // Red square
-	}*/
 
 	//arena s pouzitim polyline
 	for(int8_t i=0; i<5; i++) {
@@ -1535,10 +1532,7 @@ void initPolygons() {
  80010c4:	f997 3064 	ldrsb.w	r3, [r7, #100]	@ 0x64
  80010c8:	2b04      	cmp	r3, #4
  80010ca:	dd94      	ble.n	8000ff6 <initPolygons+0x2ca>
-	lcdLine(300, 220, -100, 200, decodeRgbValue(255, 255, 0));
-	lcdLine(300, 30, -100, -100, decodeRgbValue(255, 0, 255));
-	lcdDottedLine(300, 40, -100, -90, decodeRgbValue(255, 0, 100), 3);
-	lcdLine(300, 220, 250, -100, decodeRgbValue(0, 255, 255));*/
+	}
 
 }
  80010cc:	bf00      	nop
@@ -1899,7 +1893,7 @@ void gameLoop(){
  80013da:	b090      	sub	sp, #64	@ 0x40
  80013dc:	af02      	add	r7, sp, #8
 	// in this loop we walk down the hallway and at the end we turn back
-	int8_t step = 10;
+	int8_t step = 10;	// kazdych 10 pixelov bude bodka
  80013de:	230a      	movs	r3, #10
  80013e0:	71fb      	strb	r3, [r7, #7]
 
@@ -1943,11 +1937,10 @@ void gameLoop(){
  8001434:	21e8      	movs	r1, #232	@ 0xe8
  8001436:	20a0      	movs	r0, #160	@ 0xa0
  8001438:	f001 f810 	bl	800245c <lcdCircle>
-		for (int i = 0; i < polygonCount; i++) {	//nakresli mapu so stenami
-			lcd3DPolygon(polygons[i].vertices, polygons[i].numVertices, polygons[i].color, player.x, player.y, player.z, player.rotation, 0, 5);
-		}*/
 
-		//bodkovane polygony
+	while(1){
+
+		//bodkovane polygony su o 40% rychlejsie
 		for(int k = 0; k<20; k++) {
  800143c:	2300      	movs	r3, #0
  800143e:	637b      	str	r3, [r7, #52]	@ 0x34
@@ -2385,10 +2378,7 @@ void gameLoop(){
  8001830:	693b      	ldr	r3, [r7, #16]
  8001832:	2b09      	cmp	r3, #9
  8001834:	dd86      	ble.n	8001744 <gameLoop+0x36c>
-		LL_mDelay(500);
-		lcdFilledDottedCircle(100, 100, 80, decodeRgbValue(0, 0, 0), 5);
-		lcdPutS("KRUHY:", 220, 10, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));*/
-
+		}
 
 		LL_mDelay(3000);
  8001836:	f640 30b8 	movw	r0, #3000	@ 0xbb8
@@ -2542,6 +2532,7 @@ void MX_GPIO_Init(void)
 	  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
  800190c:	2300      	movs	r3, #0
  800190e:	60bb      	str	r3, [r7, #8]
+	  //GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
 	  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
  8001910:	2300      	movs	r3, #0
  8001912:	60fb      	str	r3, [r7, #12]
@@ -2597,6 +2588,7 @@ void MX_GPIO_Init(void)
 	  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
  800195c:	2300      	movs	r3, #0
  800195e:	60bb      	str	r3, [r7, #8]
+	  //GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
 	  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
  8001960:	2300      	movs	r3, #0
  8001962:	60fb      	str	r3, [r7, #12]
@@ -3325,7 +3317,6 @@ void lcdLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour)
  8001e40:	1ad3      	subs	r3, r2, r3
  8001e42:	613b      	str	r3, [r7, #16]
 			}
-
 			x0 += stepx;
  8001e44:	88fa      	ldrh	r2, [r7, #6]
  8001e46:	8b7b      	ldrh	r3, [r7, #26]
@@ -3424,7 +3415,6 @@ void lcdLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colour)
  8001efa:	1ad3      	subs	r3, r2, r3
  8001efc:	60fb      	str	r3, [r7, #12]
 			}
-
 			y0 += stepy;
  8001efe:	88ba      	ldrh	r2, [r7, #4]
  8001f00:	8b3b      	ldrh	r3, [r7, #24]
@@ -3588,7 +3578,6 @@ void lcdDottedLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colo
 		while (delta > 0)
  800201a:	e03b      	b.n	8002094 <lcdDottedLine+0x13c>
 		{
-
 			if (fraction >= 0)
  800201c:	693b      	ldr	r3, [r7, #16]
  800201e:	2b00      	cmp	r3, #0
@@ -3627,7 +3616,6 @@ void lcdDottedLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colo
  8002064:	4618      	mov	r0, r3
  8002066:	f7ff fdff 	bl	8001c68 <lcdPlot>
 			}
-
    			x0 += stepx;
  800206a:	88fa      	ldrh	r2, [r7, #6]
  800206c:	8b7b      	ldrh	r3, [r7, #26]
@@ -3655,9 +3643,9 @@ void lcdDottedLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colo
  8002094:	f9b7 3016 	ldrsh.w	r3, [r7, #22]
  8002098:	2b00      	cmp	r3, #0
  800209a:	dcbf      	bgt.n	800201c <lcdDottedLine+0xc4>
+			delta = delta - astep;
 			fraction += dx;
 			stp++;
-
 		}
 	}
 }
@@ -3755,9 +3743,6 @@ void lcdDottedLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t colo
  8002156:	bd90      	pop	{r4, r7, pc}
 
 08002158 <lcdPolyline>:
-		}
-	}
-}*/
 
 void lcdPolyline(int16_t *points, int16_t lines, uint16_t colour)
 {
@@ -6145,10 +6130,10 @@ int main(void)
  80032fc:	48000400 	.word	0x48000400
 
 08003300 <SystemClock_Config>:
-/**
   * @brief System Clock Configuration
   * @retval None
   */
+
 void SystemClock_Config(void)
 {
  8003300:	b580      	push	{r7, lr}
@@ -6169,7 +6154,7 @@ void SystemClock_Config(void)
 	  LL_RCC_HSI_Enable();
  8003318:	f7ff ff20 	bl	800315c <LL_RCC_HSI_Enable>
 
-	   /* Wait till HSI is ready */
+	   // Wait till HSI is ready
 	  while(LL_RCC_HSI_IsReady() != 1)
  800331c:	bf00      	nop
  800331e:	f7ff ff2d 	bl	800317c <LL_RCC_HSI_IsReady>
@@ -6195,7 +6180,7 @@ void SystemClock_Config(void)
  8003340:	2000      	movs	r0, #0
  8003342:	f7ff ff43 	bl	80031cc <LL_RCC_SetSysClkSource>
 
-	   /* Wait till System clock is ready */
+	   // Wait till System clock is ready
 	  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_HSI)
  8003346:	bf00      	nop
  8003348:	f7ff ff54 	bl	80031f4 <LL_RCC_GetSysClkSource>
@@ -6240,9 +6225,9 @@ void Error_Handler(void)
 	...
 
 0800337c <menu>:
+
+#include "ili9163.h"
 #include "gameLogic.h"
-//#include "font5x8.h"
-//#include "Minimum_font.h"
 #include "spi.h"
 
 void menu(){

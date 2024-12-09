@@ -150,9 +150,6 @@ void gameLoop(){
 			}
 			rotatePlayer(&player, 3.1416/10);
 		}
-		for (int i = 0; i < polygonCount; i++) {	//nakresli mapu so stenami
-			lcd3DPolygon(polygons[i].vertices, polygons[i].numVertices, polygons[i].color, player.x, player.y, player.z, player.rotation, 0, 5);
-		}
 		for(int k = 0; k<20; k++) {
 			for (int i = 0; i < polygonCount; i++) {	//nakresli mapu so stenami
 				lcd3DPolyline(polygons[i].vertices, polygons[i].numVertices, polygons[i].color, player.x, player.y, player.z, player.rotation, 1, step);
@@ -170,10 +167,6 @@ void gameLoop(){
 				lcd3DPolyline(polygons[i].vertices, polygons[i].numVertices, decodeRgbValue(0, 0, 0), player.x, player.y, player.z, player.rotation, 1, step);
 			}
 			rotatePlayer(&player, 3.1416/10);
-		}
-		//final plot
-		for (int i = 0; i < polygonCount; i++) {	//nakresli mapu so stenami
-			lcd3DPolygon(polygons[i].vertices, polygons[i].numVertices, polygons[i].color, player.x, player.y, player.z, player.rotation, 0, 5);
 		}
 
 		LL_mDelay(3000);
