@@ -101,6 +101,11 @@ void initPlayer() {
 // pohyb hraca na osi X a Y
 // este to nefunguje uplne na osi Y
 void movePlayer(Player *player, float stepX, float stepY, uint8_t polar) {
+
+	// pridavam deklaraciu lebo neni deklarovana premenna moveX a moveY -miro
+	float moveX = 0;
+	float moveY = 0;
+
 	//treba doladit znamienka a sin/cos funkcie na moveX a moveY
 	if (polar){	//ak sa hybeme vzhladom na natocenie hraca
 		float moveX = stepX*cos(player->rotation) + stepY*sin(player->rotation);
@@ -110,6 +115,8 @@ void movePlayer(Player *player, float stepX, float stepY, uint8_t polar) {
 		float moveX = stepX;
 		float moveY = stepY;
 	}
+
+
 	//when hitting wall the player slides along the other axis
 	if ((player->x + moveX < boundX)&&(player->x + moveX > 0)) {
 		player->x += moveX;

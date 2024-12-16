@@ -4,7 +4,7 @@
 ../Core/Src/gameLogic.c:62:6:initPolygons	5
 ../Core/Src/gameLogic.c:85:6:freePolygons	2
 ../Core/Src/gameLogic.c:92:6:initPlayer	1
-../Core/Src/gameLogic.c:102:6:movePlayer	5
-../Core/Src/gameLogic.c:115:6:rotatePlayer	3
-../Core/Src/gameLogic.c:125:6:startNewGame	1
-../Core/Src/gameLogic.c:131:6:gameLoop	5
+../Core/Src/gameLogic.c:103:6:movePlayer	6
+../Core/Src/gameLogic.c:129:6:rotatePlayer	3
+../Core/Src/gameLogic.c:139:6:startNewGame	1
+../Core/Src/gameLogic.c:145:6:gameLoop	5
