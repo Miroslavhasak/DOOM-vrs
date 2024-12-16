@@ -8,6 +8,8 @@
 #include "spi.h"
 
 void menu(){
+	int16_t difficulity = 1;		//v options sa bude dat menit
+
 	lcdPutSSized("DOOM", 215, 0, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),8);
 	lcdPutSSized("NEW GAME", 180, 64, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
 	lcdPutSSized("OPTIONS", 180, 80, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
@@ -88,8 +90,37 @@ void menu(){
 			}
 
 			//confirm your option
-			if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_3) == GPIO_PIN_RESET && select == 0)
+			if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1) == GPIO_PIN_RESET && select == 0)
 				select = 6;
+
+
+			// odkaz pre Mira: tak ako robil Matej menu, tak skus podobne urobit options a aj readme.
+			// V options sa bude prepinat obtiaznost a ked zacnes hru, tak sa hodnota obtiaznosti
+			// priradi hre. Obtiaznost => easy, medium, hard (0 - 1 - 2)
+
+			// takto nejako si predstavujem options, skus to rozvinut
+			//confirm your option
+			/*if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_3) == GPIO_PIN_RESET && select == 1){
+				//vymaz();
+				lcdPutSSized("OPTIONS", 215, 0, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
+				while(select != 0){
+					if(select == 0)
+					{
+						lcdPutSSized("EASY", 180, 64, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
+						lcdPutSSized("EASY", 180, 64, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
+					}
+					if(select == 1)
+					{
+						lcdPutSSized("HARD", 180, 64, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0),2);
+						lcdPutSSized("HARD", 180, 64, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0),2);
+					}
+					if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_3) == GPIO_PIN_RESET && select == 1){
+						//vymazOptions();
+						//drawMenu
+				}
+
+			}*/
+
 
 
 		}
@@ -115,7 +146,7 @@ void menu(){
 	sprintf(armorText, "%d%%", armor);
 	lcdPutS(armorText, 20, 222, decodeRgbValue(0, 0, 0), decodeRgbValue(0, 0, 0));
 
-	startNewGame();
+	startNewGame(difficulity);
 }
 
 

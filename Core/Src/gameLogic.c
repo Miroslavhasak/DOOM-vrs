@@ -2,15 +2,19 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "ili9163.h"
 #include "gameLogic.h"
+#include "spi.h"
 #include "menu.h"
+
 
 // Define global variables
 Polygon polygons[MAX_POLYGONS];
 int polygonCount = 0;
 Player player;
+Player enemy;
 int boundX = 1000;
 int boundY = 1000;
 
@@ -94,14 +98,24 @@ void initPlayer() {
     player.ammo = 50;       // Starting ammo
 }
 
-void movePlayer(Player *player, float step) {
-	player->x += step*cos(player->rotation);
-	player->y += step*sin(player->rotation);
-	if ((player->x > boundX)||(player->x < 0)) {	//when hitting wall the player slides
-		player->x -= step*cos(player->rotation);
+// pohyb hraca na osi X a Y
+// este to nefunguje uplne na osi Y
+void movePlayer(Player *player, float stepX, float stepY, uint8_t polar) {
+	//treba doladit znamienka a sin/cos funkcie na moveX a moveY
+	if (polar){	//ak sa hybeme vzhladom na natocenie hraca
+		float moveX = stepX*cos(player->rotation) + stepY*sin(player->rotation);
+		float moveY = stepX*sin(player->rotation) + stepY*cos(player->rotation);
 	}
-	if ((player->y > boundY)||(player->y < 0)) {
-			player->y -= step*sin(player->rotation);
+	else{		//ak chceme hraca premiestnit bez ohladu jeho na rotaciu
+		float moveX = stepX;
+		float moveY = stepY;
+	}
+	//when hitting wall the player slides along the other axis
+	if ((player->x + moveX < boundX)&&(player->x + moveX > 0)) {
+		player->x += moveX;
+	}
+	if ((player->y + moveY < boundY)&&(player->y + moveY > 0)) {
+		player->y += moveY;
 	}
 }
 
@@ -115,64 +129,79 @@ void rotatePlayer(Player *player, float angle) {
 	}
 }
 
-void startNewGame(){
+void startNewGame(int16_t difficility){
 	initPolygons(0);
 	initPlayer(0);
 	gameLoop();
 }
 
 void gameLoop(){
-	// in this loop we walk down the hallway and at the end we turn back
-	int8_t step = 10;	// kazdych 10 pixelov bude bodka
+	// odkaz pre Mateja: sfunkcni tie piny a potom prerob gameLoop aby sa tu vykonavala hra
+	// pre nepriatelov mozes pouzit strukturu hraca. Ich vykreslovanie potom ja dokoncim
+
+	int8_t step = 5;	// kazdych 10 pixelov bude bodka, samozrejme 5 je lepsie, ale viac laguje
 
 	lcdPutS("test 3D rendera:", 220, 10, decodeRgbValue(31, 31, 31), decodeRgbValue(0, 0, 0));
 	lcdRectangle(20, 225, 300, 250, decodeRgbValue(255, 255, 255)); //dolny status bar
 	lcdCircle(160,232,5,decodeRgbValue(255, 255, 255)); //akysi kruh, v povodnej doom je tam hlava hraca
+	int16_t kills2win = 1; // podmienka na skoncenie levelu, zavisi od obtiaznosti
+	int16_t kills = 0;
 
-	while(1){
+	while(kills < kills2win){
 
-		//bodkovane polygony su o 40% rychlejsie
-		for(int k = 0; k<20; k++) {
-			for (int i = 0; i < polygonCount; i++) {	//nakresli mapu so stenami
-				lcd3DPolyline(polygons[i].vertices, polygons[i].numVertices, polygons[i].color, player.x, player.y, player.z, player.rotation, 1, step);
-			}
-			for (int i = 0; i < polygonCount; i++) {	//nakresli mapu so stenami
-				lcd3DPolyline(polygons[i].vertices, polygons[i].numVertices, decodeRgbValue(0, 0, 0), player.x, player.y, player.z, player.rotation, 1, step);
-			}
-			movePlayer(&player, 50); //moving camera forward
+
+		// vykreslovanie mapy
+		for (int i = 0; i < polygonCount; i++) {	//nakresli mapu so stenami
+			lcd3DPolyline(polygons[i].vertices, polygons[i].numVertices, polygons[i].color, player.x, player.y, player.z, player.rotation, 1, step);
 		}
-		for(int k = 0; k<10; k++) {
-			for (int i = 0; i < polygonCount; i++) {	//nakresli mapu so stenami
-				lcd3DPolyline(polygons[i].vertices, polygons[i].numVertices, polygons[i].color, player.x, player.y, player.z, player.rotation, 1, step);
-			}
-			for (int i = 0; i < polygonCount; i++) {	//nakresli mapu so stenami
-				lcd3DPolyline(polygons[i].vertices, polygons[i].numVertices, decodeRgbValue(0, 0, 0), player.x, player.y, player.z, player.rotation, 1, step);
-			}
-			rotatePlayer(&player, 3.1416/10);
+		for (int i = 0; i < polygonCount; i++) {	//nakresli mapu so stenami
+			lcd3DPolyline(polygons[i].vertices, polygons[i].numVertices, decodeRgbValue(0, 0, 0), player.x, player.y, player.z, player.rotation, 1, step);
 		}
-		for(int k = 0; k<20; k++) {
-			for (int i = 0; i < polygonCount; i++) {	//nakresli mapu so stenami
-				lcd3DPolyline(polygons[i].vertices, polygons[i].numVertices, polygons[i].color, player.x, player.y, player.z, player.rotation, 1, step);
-			}
-			for (int i = 0; i < polygonCount; i++) {	//nakresli mapu so stenami
-				lcd3DPolyline(polygons[i].vertices, polygons[i].numVertices, decodeRgbValue(0, 0, 0), player.x, player.y, player.z, player.rotation, 1, step);
-			}
-			movePlayer(&player, 50); //moving camera forward
+		//ovladanie cez tlacitka
+		/*if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1) == GPIO_PIN_RESET){
+			movePlayer(&player, 50, 0, 1);
 		}
-		for(int k = 0; k<10; k++) {
-			for (int i = 0; i < polygonCount; i++) {	//nakresli mapu so stenami
-				lcd3DPolyline(polygons[i].vertices, polygons[i].numVertices, polygons[i].color, player.x, player.y, player.z, player.rotation, 1, step);
-			}
-			for (int i = 0; i < polygonCount; i++) {	//nakresli mapu so stenami
-				lcd3DPolyline(polygons[i].vertices, polygons[i].numVertices, decodeRgbValue(0, 0, 0), player.x, player.y, player.z, player.rotation, 1, step);
-			}
-			rotatePlayer(&player, 3.1416/10);
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0) == GPIO_PIN_RESET){
+			movePlayer(&player, -50, 0, 1);
+		}
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_3) == GPIO_PIN_RESET){
+			rotatePlayer(&player, +3.1416/10);
+		}*/
+
+
+
+		//ovladanie cez joystick (testujeme)
+		// treba zistit v akom formate su vystupy z jousticku a ake maju hodnoty
+		// domnievam za, ze je to od 0 do nieco, asi 255., tiez vraj 0-553-1000
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1) > 603){
+			movePlayer(&player, 50, 0, 1);
+		}
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1) < 503){
+			movePlayer(&player, -50, 0, 1);
+		}
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0) > 603){
+			movePlayer(&player, 0, 50, 1);
+		}
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0) < 503){
+			movePlayer(&player, 0, -50, 1);
+		}
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1) == GPIO_PIN_RESET){
+			rotatePlayer(&player, +3.1416/10);
 		}
 
-		LL_mDelay(3000);
+		//nejako takto si predstavujem menu pocas hry, ze stlacis tlacitko
+		// a nasledne sa spusti cyklus, kde bude "in game" menu s moznostami
+		// end game, resume, mozno aj quicksave(nech je vsetko na jednom mieste)
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0) < 0){
+			//premaz celu obrazovku nekou funkciou...
+			menu();
+			// pripadne samostatne menu do hry, ak bude treba...
+			// gamemenu();
+		}
 
 
 	}
 }
+
 
 

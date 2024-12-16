@@ -39,8 +39,9 @@ void removePolygon(int16_t index);
 void initPolygons();
 void freePolygons();
 void initPlayer();
+void movePlayer(Player *player, float stepX, float stepY, uint8_t polar);
 void rotatePlayer(Player *player, float angle);
 void gameLoop();
-void startNewGame();
+void startNewGame(int16_t difficility);
 
 #endif /* INC_GAMELOGIC_H_ */
