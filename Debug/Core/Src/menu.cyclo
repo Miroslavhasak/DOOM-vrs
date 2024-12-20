@@ -1,6 +1,7 @@
-../Core/Src/menu.c:17:6:drawMenu	1
-../Core/Src/menu.c:39:6:clearMenu	1
-../Core/Src/menu.c:58:6:lowerMenu	1
-../Core/Src/menu.c:72:6:drawDifficulty	1
-../Core/Src/menu.c:79:6:clearDifficulty	1
-../Core/Src/menu.c:86:6:menu	22
+../Core/Src/menu.c:19:6:drawMenu	1
+../Core/Src/menu.c:45:6:clearMenu	1
+../Core/Src/menu.c:57:6:drawDifficulty	1
+../Core/Src/menu.c:64:6:clearDifficulty	1
+../Core/Src/menu.c:71:6:drawReadme	1
+../Core/Src/menu.c:79:6:clearReadme	1
+../Core/Src/menu.c:87:6:menu	30
